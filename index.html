@@ -30,19 +30,20 @@
   --orange: #FF9100;
   --yellow: #FFD740;
   --purple: #D500F9;
-  --safe: env(safe-area-inset-bottom, 0px);
-  --safeTop: env(safe-area-inset-top, 0px);
+  --safe: env(safe-area-inset-bottom, 20px);
+  --safeTop: env(safe-area-inset-top, 50px);
   --navH: 68px;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Outfit', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); }
+html { height: 100%; height: -webkit-fill-available; }
+body { height: 100%; min-height: -webkit-fill-available; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); }
 button { font-family: var(--sans); cursor: pointer; }
 input { font-family: var(--sans); }
 
 /* ─── LAYOUT ─── */
-#app { display: flex; flex-direction: column; height: 100%; }
+#app { display: flex; flex-direction: column; height: 100%; height: -webkit-fill-available; }
 #content {
 flex: 1; overflow-y: auto; overflow-x: hidden;
 padding-top: calc(var(–safeTop) + 12px);
