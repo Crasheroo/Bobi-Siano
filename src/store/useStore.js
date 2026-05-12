@@ -64,6 +64,35 @@ const useStore = create(
           ),
         })),
 
+      // === AUTH ===
+      user: null,
+      syncing: false,
+      setUser: (user) => set({ user }),
+      setSyncing: (syncing) => set({ syncing }),
+
+      // === USTAWIENIA ===
+      settings: {
+        theme: 'dark',
+        accent: '#0a84ff',
+      },
+      setSettings: (data) =>
+        set((s) => ({ settings: { ...s.settings, ...data } })),
+
+      // === WYPŁATY MIESIĘCZNE ===
+      monthlySalaries: [],
+      setMonthlySalary: (year, month, amount) =>
+        set((s) => {
+          const exists = s.monthlySalaries.find((ms) => ms.year === year && ms.month === month)
+          if (exists) {
+            return {
+              monthlySalaries: s.monthlySalaries.map((ms) =>
+                ms.year === year && ms.month === month ? { ...ms, amount } : ms
+              ),
+            }
+          }
+          return { monthlySalaries: [...s.monthlySalaries, { year, month, amount }] }
+        }),
+
       // === BUDGETY KATEGORII ===
       categoryBudgets: {},
       setCategoryBudget: (category, amount) =>
@@ -71,7 +100,48 @@ const useStore = create(
           categoryBudgets: { ...s.categoryBudgets, [category]: amount },
         })),
 
+      // === CELE OSZCZĘDNOŚCIOWE ===
+      goals: [],
+      addGoal: (goal) =>
+        set((s) => ({
+          goals: [
+            { ...goal, id: Date.now().toString(), currentAmount: goal.currentAmount || 0, createdAt: new Date().toISOString() },
+            ...s.goals,
+          ],
+        })),
+      editGoal: (id, data) =>
+        set((s) => ({
+          goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)),
+        })),
+      deleteGoal: (id) =>
+        set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
+      addToGoal: (id, amount) =>
+        set((s) => ({
+          goals: s.goals.map((g) =>
+            g.id === id ? { ...g, currentAmount: Math.min(g.currentAmount + amount, g.targetAmount) } : g
+          ),
+        })),
+
+      // === RESET ===
+      resetStore: () => set({
+        profile: { name: '', salary: 0, currency: 'PLN', setupDone: false },
+        expenses: [],
+        incomes: [],
+        recurring: [],
+        goals: [],
+        monthlySalaries: [],
+        categoryBudgets: {},
+        user: null,
+        syncing: false,
+      }),
+
       // === HELPERS ===
+      getSalaryForMonth: (year, month) => {
+        const { monthlySalaries, profile } = get()
+        const entry = monthlySalaries.find((ms) => ms.year === year && ms.month === month)
+        return entry ? entry.amount : profile.salary
+      },
+
       getCurrentMonthExpenses: () => {
         const { expenses } = get()
         const now = new Date()

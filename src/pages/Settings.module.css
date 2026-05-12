@@ -1,0 +1,355 @@
+.page {
+  min-height: 100%;
+  background: var(--bg-primary);
+  padding-bottom: 48px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 16px 12px;
+}
+
+.backBtn {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary);
+  border: 0.5px solid var(--separator);
+  border-radius: 50%;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.backBtn:active { background: var(--bg-quaternary); }
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+/* Sections */
+.section {
+  padding: 20px 16px 0;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.sectionNote {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 8px 4px 0;
+  line-height: 1.5;
+}
+
+.group {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  overflow: hidden;
+}
+
+/* Rows */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.rowLeft {
+  flex: 1;
+}
+
+.rowTitle {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.rowValue {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.rowSub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.syncDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #30d158;
+  flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.googleBtn:active { background: var(--bg-tertiary); }
+
+.signOutBtn {
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  color: var(--accent-red);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.signOutBtn:active { background: rgba(255,68,58,0.08); }
+
+.rowSeparator {
+  height: 0.5px;
+  background: var(--separator);
+  margin: 0 16px;
+}
+
+/* Theme toggle */
+.themeToggle {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  padding: 2px;
+  gap: 2px;
+  border: 0.5px solid var(--separator);
+}
+
+.themeBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+
+.themeBtnActive {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+/* Accent grid */
+.accentGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 16px;
+}
+
+.accentItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+.accentItem:active { background: var(--bg-tertiary); }
+
+.accentSwatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.accentSwatchActive {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 3px var(--bg-secondary), 0 0 0 5px currentColor;
+}
+
+.accentLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Auth tabs (Google / Email) */
+.authTabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.authTab {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.authTabActive {
+  color: var(--accent-blue);
+  box-shadow: inset 0 -2px 0 var(--accent-blue);
+}
+
+/* Email form */
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px 16px;
+  gap: 10px;
+}
+
+.actionToggle {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  padding: 2px;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.actionBtnActive {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+.authInput {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--border-radius-md);
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.18s;
+}
+
+.authInput:focus {
+  border-color: var(--accent-blue);
+}
+
+.authInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.authError {
+  font-size: 13px;
+  color: var(--accent-red);
+  text-align: center;
+  padding: 2px 0;
+}
+
+.authSuccess {
+  font-size: 13px;
+  color: var(--accent-green);
+  text-align: center;
+  padding: 2px 0;
+}
+
+.authSubmitBtn {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 2px;
+}
+
+.authSubmitBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.authSubmitBtn:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+.forgotBtn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--accent-blue);
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+  opacity: 0.8;
+}
+
+.forgotBtn:active { opacity: 0.5; }

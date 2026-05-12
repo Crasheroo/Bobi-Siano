@@ -38,16 +38,19 @@
 .iconWrap {
   width: 96px;
   height: 96px;
-  background: rgba(10, 132, 255, 0.15);
-  border-radius: 28px;
+  border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .bigIcon {
-  font-size: 48px;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 22px;
 }
 
 .title {

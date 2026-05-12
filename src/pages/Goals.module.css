@@ -1,0 +1,442 @@
+.page {
+  min-height: 100%;
+  background: var(--bg-primary);
+  padding-bottom: 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 16px 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.addBtn {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.addBtn:active { transform: scale(0.9); }
+
+/* Capacity card */
+.capacityCard {
+  margin: 0 16px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  overflow: hidden;
+}
+
+.capRow {
+  display: flex;
+  align-items: stretch;
+}
+
+.capItem {
+  flex: 1;
+  padding: 18px 16px;
+  text-align: center;
+}
+
+.capLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.capValue {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.capDivider {
+  width: 0.5px;
+  background: var(--separator);
+  margin: 12px 0;
+}
+
+.capNote {
+  font-size: 11px;
+  color: var(--text-tertiary, rgba(235,235,245,0.35));
+  padding: 0 16px 14px;
+  line-height: 1.5;
+  text-align: center;
+  border-top: 0.5px solid var(--separator);
+}
+
+/* Add form */
+.form {
+  margin: 0 16px 16px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.formTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--accent-red);
+  background: rgba(255, 68, 58, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+}
+
+.iconPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--separator-opaque);
+  border-radius: var(--border-radius-sm);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.iconBtnActive {
+  border-color: var(--accent-blue);
+  background: rgba(10, 132, 255, 0.15);
+  transform: scale(1.1);
+}
+
+.colorPicker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.colorBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.colorBtnActive {
+  border-color: white;
+  transform: scale(1.2);
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--separator-opaque);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.deadlineHint {
+  font-size: 13px;
+  color: #0a84ff;
+  background: rgba(10, 132, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-weight: 500;
+}
+
+.submitBtn {
+  padding: 14px;
+  background: var(--accent-blue);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.submitBtn:active { transform: scale(0.97); opacity: 0.85; }
+
+/* Goals list */
+.goalsList {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goalCard {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.goalIconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.goalIcon {
+  font-size: 24px;
+}
+
+.goalInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.goalName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.goalAmounts {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.goalSep {
+  color: var(--text-tertiary, rgba(235,235,245,0.3));
+}
+
+.deleteGoalBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.progressTrack {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+.progressPct {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: -4px;
+}
+
+.goalDone {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #30d158;
+  padding: 8px;
+  background: rgba(48, 209, 88, 0.1);
+  border-radius: var(--border-radius-sm);
+}
+
+.goalStats {
+  display: flex;
+  gap: 8px;
+}
+
+.goalStat {
+  flex: 1;
+  background: var(--bg-tertiary, rgba(255,255,255,0.05));
+  border-radius: var(--border-radius-sm);
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.goalStatLabel {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.goalStatValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.deadlineBadge {
+  border: 0.5px solid;
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.depositBtn {
+  border: 1px solid;
+  background: none;
+  border-radius: var(--border-radius-sm);
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.depositBtn:active { opacity: 0.7; }
+
+.depositRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.depositInput {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--separator-opaque);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+}
+
+.depositConfirm {
+  padding: 10px 14px;
+  background: #30d158;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.depositCancel {
+  padding: 10px 12px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 24px;
+}
+.empty span { font-size: 40px; }
+.empty p { font-size: 15px; color: var(--text-secondary); text-align: center; line-height: 1.5; }
+
+/* Report */
+.reportSection {
+  margin: 20px 16px 0;
+}
+
+.reportTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.reportCard {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reportRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reportLabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.reportValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reportDivider {
+  height: 0.5px;
+  background: var(--separator);
+}
+
+.reportSub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}

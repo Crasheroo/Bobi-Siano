@@ -10,7 +10,7 @@ import styles from './Analytics.module.css'
 const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#5e5ce6', '#34c759', '#ffd60a', '#64d2ff', '#98989e']
 
 export default function Analytics() {
-  const { expenses, profile, getMonthlyRecurringTotal } = useStore()
+  const { expenses, profile, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
   const [activeTab, setActiveTab] = useState('categories')
   const now = new Date()
 
@@ -47,17 +47,18 @@ export default function Analytics() {
       result.push({
         month: MONTH_NAMES[m].slice(0, 3),
         wydatki: Math.round(total),
-        budzet: Math.round(profile.salary),
+        budzet: Math.round(getSalaryForMonth(y, m)),
       })
     }
     return result
-  }, [expenses, profile.salary])
+  }, [expenses, getSalaryForMonth])
 
   const recurringTotal = getMonthlyRecurringTotal()
   const expensesTotal = monthExpenses.reduce((s, e) => s + e.amount, 0)
   const totalSpent = expensesTotal + recurringTotal
-  const saved = profile.salary - totalSpent
-  const savingRate = profile.salary > 0 ? (saved / profile.salary) * 100 : 0
+  const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
+  const saved = currentSalary - totalSpent
+  const savingRate = currentSalary > 0 ? (saved / currentSalary) * 100 : 0
 
   const budgetData = [
     { name: 'Stałe płatności', value: Math.round(recurringTotal), color: '#5e5ce6' },
@@ -94,7 +95,7 @@ export default function Analytics() {
           </p>
         </div>
         <div className={styles.scoreRight}>
-          <p className={styles.scoreDetail}>Zarobki: <strong>{formatCurrency(profile.salary)}</strong></p>
+          <p className={styles.scoreDetail}>Zarobki: <strong>{formatCurrency(currentSalary)}</strong></p>
           <p className={styles.scoreDetail}>Wydano: <strong style={{ color: '#ff453a' }}>{formatCurrency(totalSpent)}</strong></p>
           <p className={styles.scoreDetail}>Zostało: <strong style={{ color: saved >= 0 ? '#30d158' : '#ff453a' }}>{formatCurrency(saved)}</strong></p>
         </div>
@@ -193,7 +194,7 @@ export default function Analytics() {
                 <span className={styles.budgetName}>{item.name}</span>
                 <span className={styles.budgetVal}>{formatCurrency(item.value)}</span>
                 <span className={styles.budgetPct}>
-                  {profile.salary > 0 ? ((item.value / profile.salary) * 100).toFixed(0) : 0}%
+                  {currentSalary > 0 ? ((item.value / currentSalary) * 100).toFixed(0) : 0}%
                 </span>
               </div>
             ))}
