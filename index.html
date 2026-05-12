@@ -1,82 +1,196 @@
 <!DOCTYPE html>
-        <div>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
+  <title>MoneyFlow</title>
+
+  <!-- iPhone / PWA -->
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="./manifest.json" />
+</head>
+
+<body>
+
+  <div class="bg-blur blur-1"></div>
+  <div class="bg-blur blur-2"></div>
+
+  <main class="app">
+
+    <!-- HEADER -->
+    <header class="topbar">
+
+      <div>
+        <p class="hello">Dzień dobry 👋</p>
+        <h1>MoneyFlow</h1>
+      </div>
+
+      <div class="avatar">
+        M
+      </div>
+
+    </header>
+
+    <!-- MAIN CARD -->
+    <section class="balance-card glass">
+
+      <p class="card-label">
+        Bezpiecznie możesz dziś wydać
+      </p>
+
+      <h2 id="safeSpend">
+        124 zł
+      </h2>
+
+      <div class="balance-stats">
+
+        <div class="stat">
           <span>Pozostało</span>
-          <strong id="remaining">3200 zł</strong>
+          <strong id="remaining">5000 zł</strong>
         </div>
 
-        <div>
+        <div class="stat">
           <span>Wydane</span>
           <strong id="spent">0 zł</strong>
         </div>
+
       </div>
+
     </section>
 
-
+    <!-- AI COACH -->
     <section class="coach-card glass">
-      <p class="coach-title">AI Coach</p>
+
+      <div class="coach-header">
+        <div class="coach-dot"></div>
+        <p>AI Coach</p>
+      </div>
+
       <h3 id="coachMessage">
         Zacznij dodawać wydatki, a pokażę Ci gdzie uciekają pieniądze.
       </h3>
+
     </section>
 
+    <!-- QUICK ACTIONS -->
+    <section class="quick-actions">
 
-    <section class="section-title">
-      <h2>Dzisiejsze wydatki</h2>
+      <button class="action-btn glass">
+        📸 Skanuj
+      </button>
+
+      <button class="action-btn glass">
+        🎯 Cele
+      </button>
+
+      <button class="action-btn glass">
+        📊 Analiza
+      </button>
+
     </section>
 
+    <!-- TITLE -->
+    <section class="section-header">
+      <h2>Ostatnie wydatki</h2>
+    </section>
 
+    <!-- EXPENSE LIST -->
     <section id="expenseList" class="expense-list">
     </section>
 
+  </main>
 
-    <button class="fab" id="openModal">
-      +
-    </button>
+  <!-- FLOAT BUTTON -->
+  <button id="openModal" class="fab">
+    +
+  </button>
 
+  <!-- MODAL -->
+  <div id="modal" class="modal hidden">
 
-    <div class="modal hidden" id="modal">
-      <div class="modal-content glass">
+    <div class="modal-sheet">
 
-        <div class="modal-header">
-          <h2>Dodaj wydatek</h2>
-          <button id="closeModal">✕</button>
-        </div>
+      <div class="sheet-handle"></div>
 
-        <form id="expenseForm">
+      <div class="modal-header">
+
+        <h2>Dodaj wydatek</h2>
+
+        <button id="closeModal" class="close-btn">
+          ✕
+        </button>
+
+      </div>
+
+      <form id="expenseForm">
+
+        <div class="input-group">
+
+          <label>Kwota</label>
 
           <input
             type="number"
             id="amount"
-            placeholder="Kwota"
+            placeholder="0"
             required
           />
+
+        </div>
+
+        <div class="input-group">
+
+          <label>Opis</label>
 
           <input
             type="text"
             id="title"
-            placeholder="Opis"
+            placeholder="Np. Starbucks"
             required
           />
 
+        </div>
+
+        <div class="input-group">
+
+          <label>Kategoria</label>
+
           <select id="category">
+
             <option>Jedzenie</option>
             <option>Transport</option>
             <option>Zakupy</option>
             <option>Subskrypcje</option>
             <option>Rozrywka</option>
+            <option>Zdrowie</option>
             <option>Inne</option>
+
           </select>
 
-          <button type="submit" class="save-btn">
-            Zapisz wydatek
-          </button>
+        </div>
 
-        </form>
-      </div>
+        <button type="submit" class="save-btn">
+          Zapisz wydatek
+        </button>
+
+      </form>
+
     </div>
 
   </div>
 
-<script src="app.js"></script>
+  <!-- JAVASCRIPT -->
+  <script src="./app.js"></script>
+
 </body>
 </html>
