@@ -12,7 +12,21 @@ const QUICK_PROMPTS = [
   'Które kategorie są najdroższe?',
 ]
 
-const SYSTEM_PROMPT = `Jesteś AI asystentem finansowym w aplikacji MonLucenteyTrack. Pomagasz użytkownikowi analizować wydatki, znajdować sposoby na oszczędzanie i zarządzać budżetem. Rozmawiasz po polsku. Jesteś konkretny, pomocny i motywujący. Używaj danych finansowych użytkownika do personalizowanych porad. Formatuj odpowiedzi czytelnie — używaj emoji i krótkich akapitów. Nie przekraczaj 250 słów na odpowiedź.`
+const SYSTEM_PROMPT = `Jesteś AI asystentem finansowym w aplikacji MoneyTrack. Pomagasz użytkownikowi analizować wydatki, znajdować sposoby na oszczędzanie i zarządzać budżetem. Rozmawiasz po polsku. Jesteś konkretny, pomocny i motywujący. Używaj danych finansowych użytkownika do personalizowanych porad. Formatuj odpowiedzi czytelnie — używaj emoji i krótkich akapitów. Nie przekraczaj 250 słów na odpowiedź.`
+
+function getErrorMessage(err) {
+  const msg = err?.message || ''
+  if (msg.includes('429') || msg.includes('Too Many Requests')) {
+    return '⚠️ Zbyt wiele zapytań naraz. Poczekaj chwilę i spróbuj ponownie.'
+  }
+  if (msg.includes('API_KEY') || msg.includes('klucza') || msg.includes('403')) {
+    return '⚠️ Nieprawidłowy klucz API. Sprawdź czy VITE_GEMINI_API_KEY jest poprawnie ustawiony.'
+  }
+  if (msg.includes('400')) {
+    return '⚠️ Błąd zapytania. Spróbuj zadać pytanie od nowa.'
+  }
+  return `⚠️ Błąd: ${msg || 'Nieznany błąd. Spróbuj ponownie.'}`
+}
 
 export default function AIAssistant() {
   const store = useStore()
@@ -44,19 +58,15 @@ export default function AIAssistant() {
       const financialContext = buildFinancialContext(store)
       const systemWithContext = SYSTEM_PROMPT + '\n\n' + financialContext
 
-      const history = [...messages, userMessage]
-        .filter((m) => m.role !== 'system')
-        .map((m) => ({ role: m.role, content: m.content }))
+      // Wyślij tylko wiadomości user/assistant (bez pierwszej wiadomości powitalnej asystenta)
+      const history = [...messages, userMessage].filter((m) => m.role !== 'system')
 
       const response = await callClaude(history, systemWithContext)
       setMessages((prev) => [...prev, { role: 'assistant', content: response }])
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: 'assistant',
-          content: '⚠️ Błąd połączenia z AI. Sprawdź czy klucz API Anthropic jest skonfigurowany poprawnie w ustawieniach serwera.',
-        },
+        { role: 'assistant', content: getErrorMessage(err) },
       ])
     } finally {
       setLoading(false)
@@ -78,7 +88,7 @@ export default function AIAssistant() {
         </div>
         <div>
           <h1 className={styles.title}>AI Asystent</h1>
-          <p className={styles.subtitle}>Powered by Claude</p>
+          <p className={styles.subtitle}>Powered by Gemini</p>
         </div>
       </div>
 
@@ -106,16 +116,13 @@ export default function AIAssistant() {
           <div className={`${styles.bubble} ${styles.bubbleAI}`}>
             <div className={styles.aiDot}>✦</div>
             <div className={styles.typing}>
-              <span />
-              <span />
-              <span />
+              <span /><span /><span />
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick prompts */}
       {messages.length <= 1 && !loading && (
         <div className={styles.quickPrompts}>
           {QUICK_PROMPTS.map((p, i) => (
