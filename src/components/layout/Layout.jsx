@@ -23,8 +23,6 @@ const TABS = [
         <path d="M20 12V22H4V12" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M22 7H2V12H22V7Z" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M12 22V7" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round"/>
-        <path d="M12 7H7.5C6.57 7 5.68 6.63 5.02 5.97C4.37 5.32 4 4.43 4 3.5C4 2.57 4.37 1.68 5.02 1.02C5.68 0.37 6.57 0 7.5 0C10.5 0 12 7 12 7Z" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12 7H16.5C17.43 7 18.32 6.63 18.98 5.97C19.63 5.32 20 4.43 20 3.5C20 2.57 19.63 1.68 18.98 1.02C18.32 0.37 17.43 0 16.5 0C13.5 0 12 7 12 7Z" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     ),
   },
@@ -46,17 +44,6 @@ const TABS = [
         <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <polyline points="7 23 3 19 7 15" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    path: '/ai',
-    label: 'AI',
-    icon: (active) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8"/>
-        <path d="M8 12h8M12 8v8" stroke={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'} strokeWidth="1.8" strokeLinecap="round"/>
-        <circle cx="12" cy="12" r="2" fill={active ? '#0a84ff' : 'rgba(235,235,245,0.45)'}/>
       </svg>
     ),
   },

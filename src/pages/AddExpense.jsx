@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency } from '../utils/constants.js'
-import { analyzeReceipt } from '../services/ai.js'
+import { CATEGORIES } from '../utils/constants.js'
+import { scanReceipt } from '../services/ocr.js'
 import styles from './AddExpense.module.css'
 
 export default function AddExpense() {
@@ -15,6 +15,7 @@ export default function AddExpense() {
   const [category, setCategory] = useState('food')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [scanning, setScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState(0)
   const [scanResult, setScanResult] = useState(null)
   const [error, setError] = useState('')
 
@@ -37,6 +38,8 @@ export default function AddExpense() {
     if (!file) return
     setScanning(true)
     setError('')
+    setScanProgress(0)
+    setScanResult(null)
 
     try {
       const base64 = await new Promise((res, rej) => {
@@ -46,20 +49,22 @@ export default function AddExpense() {
         reader.readAsDataURL(file)
       })
 
-      const result = await analyzeReceipt(base64, file.type)
+      const result = await scanReceipt(base64, file.type, setScanProgress)
+
       if (result) {
         setScanResult(result)
-        if (result.total) setAmount(String(result.total))
+        if (result.total > 0) setAmount(String(result.total))
         if (result.store) setDescription(result.store)
         if (result.category) setCategory(result.category)
         if (result.date) setDate(result.date)
       } else {
-        setError('Nie udało się odczytać paragonu. Wpisz ręcznie.')
+        setError('Nie udało się odczytać paragonu. Wpisz dane ręcznie.')
       }
     } catch (err) {
-      setError('Błąd skanowania: ' + (err?.message || 'Sprawdź klucz OpenAI API'))
+      setError('Błąd skanowania: ' + (err?.message || 'Spróbuj ponownie'))
     } finally {
       setScanning(false)
+      setScanProgress(0)
     }
   }
 
@@ -91,24 +96,32 @@ export default function AddExpense() {
           disabled={scanning}
         >
           {scanning ? (
-            <span className={styles.spinner} />
+            <div className={styles.scanProgress}>
+              <div className={styles.scanProgressBar}>
+                <div className={styles.scanProgressFill} style={{ width: `${scanProgress}%` }} />
+              </div>
+              <span>Skanuję paragon... {scanProgress}%</span>
+            </div>
           ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="12" cy="13" r="4" stroke="white" strokeWidth="1.8"/>
-            </svg>
+            <>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.8"/>
+              </svg>
+              Skanuj paragon
+            </>
           )}
-          {scanning ? 'Skanuję paragon...' : 'Skanuj paragon (AI)'}
         </button>
+        <p className={styles.scanNote}>Działa offline — bez AI, bez kosztów</p>
       </div>
 
       {scanResult && (
         <div className={styles.scanSuccess}>
           <span>✅</span>
           <div>
-            <p className={styles.scanStore}>{scanResult.store}</p>
+            <p className={styles.scanStore}>{scanResult.store || 'Paragon zeskanowany'}</p>
             {scanResult.items && scanResult.items.length > 0 && (
-              <p className={styles.scanItems}>{scanResult.items.length} pozycji na paragonie</p>
+              <p className={styles.scanItems}>{scanResult.items.length} pozycji wykrytych</p>
             )}
           </div>
         </div>

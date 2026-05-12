@@ -7,7 +7,6 @@ import Dashboard from './pages/Dashboard.jsx'
 import Expenses from './pages/Expenses.jsx'
 import Recurring from './pages/Recurring.jsx'
 import Analytics from './pages/Analytics.jsx'
-import AIAssistant from './pages/AIAssistant.jsx'
 import AddExpense from './pages/AddExpense.jsx'
 
 export default function App() {
@@ -28,7 +27,6 @@ export default function App() {
             <Route path="/add-expense" element={<AddExpense />} />
             <Route path="/recurring" element={<Recurring />} />
             <Route path="/analytics" element={<Analytics />} />
-            <Route path="/ai" element={<AIAssistant />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         )}
