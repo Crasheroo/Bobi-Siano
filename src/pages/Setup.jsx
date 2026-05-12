@@ -27,7 +27,7 @@ export default function Setup() {
           <div className={styles.iconWrap}>
             <span className={styles.bigIcon}>💰</span>
           </div>
-          <h1 className={styles.title}>MoneyTrack</h1>
+          <h1 className={styles.title}>Lucent</h1>
           <p className={styles.subtitle}>
             Dowiedz się, gdzie naprawdę znikają Twoje pieniądze. Inteligentna analiza wydatków z AI.
           </p>
