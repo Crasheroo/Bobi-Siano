@@ -3,7 +3,7 @@ export default {
   async fetch(request, env) {
     // CORS — pozwól tylko swojej domenie GitHub Pages
     const allowedOrigins = [
-      'https://TWOJ_NICK.github.io',  // <-- zmień na swój GitHub username
+      'https://Crasheroo.github.io',  // <-- zmień na swój GitHub username
       'http://localhost:3000',
     ]
 
