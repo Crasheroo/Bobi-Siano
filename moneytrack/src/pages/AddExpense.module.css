@@ -1,0 +1,223 @@
+.page {
+  min-height: 100svh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 120px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 16px 16px;
+}
+
+.back {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.scanSection {
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+.scanBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px dashed rgba(10, 132, 255, 0.5);
+  border-radius: var(--border-radius-md);
+  color: var(--accent-blue);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.scanBtn:disabled {
+  opacity: 0.6;
+}
+
+.scanBtn:active {
+  background: var(--bg-tertiary);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(10, 132, 255, 0.3);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.scanSuccess {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 12px 16px;
+  background: rgba(48, 209, 88, 0.1);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  border-radius: var(--border-radius-md);
+  font-size: 15px;
+}
+
+.scanStore {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scanItems {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.error {
+  margin: 0 16px 12px;
+  padding: 12px 16px;
+  background: rgba(255, 68, 58, 0.1);
+  border: 1px solid rgba(255, 68, 58, 0.3);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  color: var(--accent-red);
+}
+
+.form {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.amountWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  padding: 12px 20px;
+  border: 1px solid var(--separator-opaque);
+}
+
+.amountPrefix {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.amountInput {
+  flex: 1;
+  background: none;
+  border: none;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  width: 100%;
+  padding: 0;
+}
+
+.field {}
+
+.fieldLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator-opaque);
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.catBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator-opaque);
+  border-radius: var(--border-radius-full);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.catBtnActive {
+  color: var(--text-primary);
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--separator);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent-blue);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: var(--border-radius-full);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.submitBtn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
