@@ -37,8 +37,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Klucz Gemini — dodaj w: GitHub repo → Settings → Secrets → Actions
-          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          # Klucz OpenAI — dodaj w: GitHub repo → Settings → Secrets → Actions
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -88,7 +88,7 @@ npm run preview
 ## 🗂️ Struktura projektu
 
 ```
-Lucent/
+lucent/
 ├── src/
 │   ├── pages/
 │   │   ├── Setup.jsx          # Onboarding

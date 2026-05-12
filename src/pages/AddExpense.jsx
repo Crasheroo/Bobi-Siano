@@ -57,7 +57,7 @@ export default function AddExpense() {
         setError('Nie udało się odczytać paragonu. Wpisz ręcznie.')
       }
     } catch (err) {
-      setError('Błąd skanowania. Sprawdź klucz API.')
+      setError('Błąd skanowania: ' + (err?.message || 'Sprawdź klucz OpenAI API'))
     } finally {
       setScanning(false)
     }

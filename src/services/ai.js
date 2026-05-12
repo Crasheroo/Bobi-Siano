@@ -1,33 +1,30 @@
-// Gemini API — darmowy tier (15 req/min, 1500/dzień)
-// Klucz: https://aistudio.google.com/apikey
-const GEMINI_MODEL = 'gemini-2.0-flash'
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ''
+// OpenAI API — gpt-4o-mini (tani, szybki, świetny do paragonów i chatu)
+// Klucz: https://platform.openai.com/api-keys
+const OPENAI_MODEL = 'gpt-4o-mini'
+const OPENAI_VISION_MODEL = 'gpt-4o-mini'
+const API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
+const API_URL = 'https://api.openai.com/v1/chat/completions'
 
-function getApiUrl() {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`
-}
+async function fetchOpenAI(messages, retries = 2) {
+  if (!API_KEY) throw new Error('Brak klucza OpenAI API (VITE_OPENAI_API_KEY)')
 
-async function fetchGemini(contents, systemPrompt = '', retries = 2) {
-  if (!API_KEY) throw new Error('Brak klucza Gemini API (VITE_GEMINI_API_KEY)')
-
-  const body = {
-    contents,
-    generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
-  }
-  if (systemPrompt) {
-    body.systemInstruction = { parts: [{ text: systemPrompt }] }
-  }
-
-  const response = await fetch(getApiUrl(), {
+  const response = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      max_tokens: 1000,
+      messages,
+    }),
   })
 
   // 429 = za dużo zapytań — poczekaj 3 sekundy i spróbuj ponownie
   if (response.status === 429 && retries > 0) {
     await new Promise((r) => setTimeout(r, 3000))
-    return fetchGemini(contents, systemPrompt, retries - 1)
+    return fetchOpenAI(messages, retries - 1)
   }
 
   if (!response.ok) {
@@ -36,52 +33,91 @@ async function fetchGemini(contents, systemPrompt = '', retries = 2) {
   }
 
   const data = await response.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return data.choices?.[0]?.message?.content || ''
 }
 
-// Gemini wymaga naprzemiennych ról user/model i żeby ostatnia była user
-function toGeminiContents(messages) {
-  // Filtruj żeby role się naprzemiennie zmieniały
-  const filtered = []
-  let lastRole = null
-  for (const m of messages) {
-    const role = m.role === 'assistant' ? 'model' : 'user'
-    if (role === lastRole) {
-      // Połącz z poprzednią wiadomością tego samego rola
-      filtered[filtered.length - 1].parts[0].text += '\n' + m.content
-    } else {
-      filtered.push({ role, parts: [{ text: m.content }] })
-      lastRole = role
-    }
-  }
-  // Gemini wymaga żeby ostatnia wiadomość była od usera
-  if (filtered.length > 0 && filtered[filtered.length - 1].role === 'model') {
-    filtered.push({ role: 'user', parts: [{ text: 'Kontynuuj.' }] })
-  }
-  return filtered
-}
-
+// Chat — historia wiadomości w formacie OpenAI (role: user/assistant/system)
 export async function callClaude(messages, systemPrompt = '') {
-  const contents = toGeminiContents(messages)
-  return fetchGemini(contents, systemPrompt)
+  const openaiMessages = []
+
+  if (systemPrompt) {
+    openaiMessages.push({ role: 'system', content: systemPrompt })
+  }
+
+  for (const m of messages) {
+    openaiMessages.push({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
+    })
+  }
+
+  return fetchOpenAI(openaiMessages)
 }
 
+// Skanowanie paragonu — vision
 export async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
-  const contents = [{
-    role: 'user',
-    parts: [
-      { inlineData: { mimeType, data: base64Image } },
-      { text: 'Przeanalizuj ten paragon i zwróć TYLKO czysty JSON (zero komentarzy, zero markdown): {"store":"nazwa sklepu","total":liczba,"date":"YYYY-MM-DD lub null","category":"food|transport|entertainment|health|shopping|restaurants|utilities|subscriptions|fitness|education|travel|other","items":[{"name":"nazwa","price":liczba}]}' },
-    ],
-  }]
+  if (!API_KEY) throw new Error('Brak klucza OpenAI API (VITE_OPENAI_API_KEY)')
 
-  const text = await fetchGemini(contents)
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_VISION_MODEL,
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType};base64,${base64Image}`,
+                detail: 'low',
+              },
+            },
+            {
+              type: 'text',
+              text: 'Przeanalizuj ten paragon i zwróć TYLKO czysty JSON (zero komentarzy, zero markdown): {"store":"nazwa sklepu","total":liczba,"date":"YYYY-MM-DD lub null","category":"food|transport|entertainment|health|shopping|restaurants|utilities|subscriptions|fitness|education|travel|other","items":[{"name":"nazwa","price":liczba}]}',
+            },
+          ],
+        },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Błąd API: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const text = data.choices?.[0]?.message?.content || ''
+
   try {
     return JSON.parse(text.replace(/```json|```/g, '').trim())
   } catch {
     return null
   }
 }
+
+function getErrorMessage(err) {
+  const msg = err?.message || ''
+  if (msg.includes('429') || msg.includes('Too Many Requests')) {
+    return '⚠️ Zbyt wiele zapytań. Poczekaj chwilę i spróbuj ponownie.'
+  }
+  if (msg.includes('401') || msg.includes('Incorrect API key')) {
+    return '⚠️ Nieprawidłowy klucz OpenAI. Sprawdź czy VITE_OPENAI_API_KEY jest poprawny.'
+  }
+  if (msg.includes('insufficient_quota') || msg.includes('exceeded')) {
+    return '⚠️ Wyczerpany limit kredytów OpenAI. Doładuj konto na platform.openai.com.'
+  }
+  return `⚠️ Błąd: ${msg || 'Nieznany błąd. Spróbuj ponownie.'}`
+}
+
+export { getErrorMessage }
 
 export function buildFinancialContext(store) {
   const { profile, expenses, recurring, getCurrentMonthExpenses, getMonthlyRecurringTotal } = store

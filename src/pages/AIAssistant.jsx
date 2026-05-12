@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import useStore from '../store/useStore.js'
-import { callClaude, buildFinancialContext } from '../services/ai.js'
+import { callClaude, buildFinancialContext, getErrorMessage } from '../services/ai.js'
 import styles from './AIAssistant.module.css'
 
 const QUICK_PROMPTS = [
@@ -12,21 +12,7 @@ const QUICK_PROMPTS = [
   'Które kategorie są najdroższe?',
 ]
 
-const SYSTEM_PROMPT = `Jesteś AI asystentem finansowym w aplikacji MoneyTrack. Pomagasz użytkownikowi analizować wydatki, znajdować sposoby na oszczędzanie i zarządzać budżetem. Rozmawiasz po polsku. Jesteś konkretny, pomocny i motywujący. Używaj danych finansowych użytkownika do personalizowanych porad. Formatuj odpowiedzi czytelnie — używaj emoji i krótkich akapitów. Nie przekraczaj 250 słów na odpowiedź.`
-
-function getErrorMessage(err) {
-  const msg = err?.message || ''
-  if (msg.includes('429') || msg.includes('Too Many Requests')) {
-    return '⚠️ Zbyt wiele zapytań naraz. Poczekaj chwilę i spróbuj ponownie.'
-  }
-  if (msg.includes('API_KEY') || msg.includes('klucza') || msg.includes('403')) {
-    return '⚠️ Nieprawidłowy klucz API. Sprawdź czy VITE_GEMINI_API_KEY jest poprawnie ustawiony.'
-  }
-  if (msg.includes('400')) {
-    return '⚠️ Błąd zapytania. Spróbuj zadać pytanie od nowa.'
-  }
-  return `⚠️ Błąd: ${msg || 'Nieznany błąd. Spróbuj ponownie.'}`
-}
+const SYSTEM_PROMPT = `Jesteś AI asystentem finansowym w aplikacji Lucent. Pomagasz użytkownikowi analizować wydatki, znajdować sposoby na oszczędzanie i zarządzać budżetem. Rozmawiasz po polsku. Jesteś konkretny, pomocny i motywujący. Używaj danych finansowych użytkownika do personalizowanych porad. Formatuj odpowiedzi czytelnie — używaj emoji i krótkich akapitów. Nie przekraczaj 250 słów na odpowiedź.`
 
 export default function AIAssistant() {
   const store = useStore()
@@ -88,7 +74,7 @@ export default function AIAssistant() {
         </div>
         <div>
           <h1 className={styles.title}>AI Asystent</h1>
-          <p className={styles.subtitle}>Powered by Gemini</p>
+          <p className={styles.subtitle}>Powered by OpenAI</p>
         </div>
       </div>
 

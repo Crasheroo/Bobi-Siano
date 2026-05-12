@@ -1,9 +1,19 @@
 /**
+ * MoneyTrack — Cloudflare Worker (proxy do Anthropic API)
+ *
+ * Deploy:
+ *   1. Wejdź na https://workers.cloudflare.com i zaloguj się
+ *   2. Utwórz nowy Worker, wklej ten kod
+ *   3. Dodaj sekret: Settings → Variables → Secret: ANTHROPIC_API_KEY = sk-ant-...
+ *   4. Zapisz i pobierz URL workera (np. https://moneytrack.twoja-domena.workers.dev)
+ *   5. Wklej ten URL jako VITE_API_URL w sekretach GitHuba
+ */
+
 export default {
   async fetch(request, env) {
     // CORS — pozwól tylko swojej domenie GitHub Pages
     const allowedOrigins = [
-      'https://Crasheroo.github.io',  // <-- zmień na swój GitHub username
+      'https://TWOJ_NICK.github.io',  // <-- zmień na swój GitHub username
       'http://localhost:3000',
     ]
 

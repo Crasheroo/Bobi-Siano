@@ -94,7 +94,7 @@ const useStore = create(
       },
     }),
     {
-      name: 'Lucent-storage',
+      name: 'lucent-storage',
       version: 1,
     }
   )

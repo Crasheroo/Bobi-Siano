@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const REPO_NAME = 'Bobi-Siano'
+// Zmień 'lucent' na nazwę swojego repozytorium na GitHubie
+const REPO_NAME = 'lucent'
 
 export default defineConfig({
   plugins: [react()],
