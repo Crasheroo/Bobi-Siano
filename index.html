@@ -3,226 +3,1289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savings Coach - Twój osobisty doradca finansowy</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Savings Coach - Finansowy Coach</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* HEADER GRADIENT STYLE */
+        .header {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            padding: 24px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(108, 92, 231, 0.2);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* QUICK STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #b0b0b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-top: 8px;
+        }
+
+        /* MAIN CONTENT GRID */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* CARD STYLE */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 28px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-small {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        /* FORM ELEMENTS */
+        input, textarea, select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 14px 16px;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #6c5ce7;
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        input::placeholder {
+            color: #808080;
+        }
+
+        /* EXPENSE ITEM */
+        .expense-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        .expense-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(4px);
+        }
+
+        .expense-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .expense-icon {
+            font-size: 24px;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(108, 92, 231, 0.15);
+            border-radius: 12px;
+        }
+
+        .expense-details {
+            flex: 1;
+        }
+
+        .expense-category {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .expense-date {
+            font-size: 13px;
+            color: #a0a0a0;
+        }
+
+        .expense-amount {
+            font-weight: 700;
+            font-size: 16px;
+            color: #6c5ce7;
+        }
+
+        .delete-btn {
+            background: rgba(255, 76, 76, 0.2);
+            border: none;
+            color: #ff4c4c;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 76, 76, 0.3);
+        }
+
+        /* BOTTOM NAVIGATION */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 80px;
+            z-index: 200;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 16px;
+            transition: all 0.3s;
+            color: #808080;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .nav-item:hover {
+            color: #a29bfe;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            color: #808080;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            color: #6c5ce7;
+            border-bottom-color: #6c5ce7;
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 6px;
+        }
+
+        /* GOAL CARD */
+        .goal-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .goal-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .goal-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .goal-amount {
+            color: #6c5ce7;
+            font-weight: 700;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(15, 15, 30, 0.95), rgba(26, 26, 46, 0.95));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #6c5ce7;
+            transform: scale(1.1);
+        }
+
+        /* SECTIONS */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        /* COACH MESSAGE */
+        .coach-message {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .coach-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .coach-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        /* CATEGORY BADGE */
+        .category-badge {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.2);
+            color: #a29bfe;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #808080;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* CHART CONTAINER */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        /* GRADIENT TEXT */
+        .gradient-text {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* BADGE */
+        .badge {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.2);
+            color: #a29bfe;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .modal-content {
+                padding: 24px;
+                border-radius: 24px;
+            }
+        }
+
+        /* SCROLL */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(108, 92, 231, 0.4);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(108, 92, 231, 0.6);
+        }
+
+        /* DARK MODE */
+        body.dark-mode {
+            background: linear-gradient(135deg, #0a0a14 0%, #0f0f1e 100%);
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ec 100%);
+            color: #1a1a1a;
+        }
+
+        body.light-mode .card,
+        body.light-mode .stat-card,
+        body.light-mode .expense-item,
+        body.light-mode .goal-card {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .card:hover,
+        body.light-mode .stat-card:hover,
+        body.light-mode .expense-item:hover {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        body.light-mode input,
+        body.light-mode textarea,
+        body.light-mode select {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #1a1a1a;
+        }
+
+        body.light-mode .stat-label,
+        body.light-mode .expense-date {
+            color: #666666;
+        }
+
+        body.light-mode .tab {
+            color: #666666;
+        }
+
+        body.light-mode .bottom-nav {
+            background: rgba(245, 245, 247, 0.95);
+            border-top-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .nav-item {
+            color: #999999;
+        }
+
+        body.light-mode .nav-item.active {
+            color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        body.light-mode .modal-content {
+            background: linear-gradient(135deg, rgba(245, 245, 247, 0.98), rgba(232, 232, 236, 0.98));
+            color: #1a1a1a;
+        }
+    </style>
 </head>
-<body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <h1 class="app-title">Savings Coach</h1>
-                <p class="app-subtitle">Kontroluj swoje finanse inteligentnie</p>
-            </div>
-        </header>
-
-        <!-- Navigation Tabs -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-tab="dashboard">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                <span>Przegląd</span>
-            </button>
-            <button class="nav-item" data-tab="expenses">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="1"></circle>
-                    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m2.12-2.12l4.24-4.24M19.78 19.78l-4.24-4.24m-2.12-2.12l-4.24-4.24"></path>
-                </svg>
-                <span>Wydatki</span>
-            </button>
-            <button class="nav-item add-btn" data-tab="add">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
-                </svg>
-                <span>Dodaj</span>
-            </button>
-            <button class="nav-item" data-tab="goals">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 6v6l4 2"></path>
-                </svg>
-                <span>Cele</span>
-            </button>
-            <button class="nav-item" data-tab="insights">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M3 3v18h18"></path>
-                    <path d="M18 17V9M13 17v-3M8 17v-7"></path>
-                </svg>
-                <span>Analiza</span>
-            </button>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="app-main">
-            <!-- Dashboard Tab -->
-            <section id="dashboard" class="tab-content active">
-                <div class="dashboard-section">
-                    <div class="balance-card">
-                        <p class="balance-label">Twoje saldo</p>
-                        <h2 class="balance-amount" id="totalBalance">0 zł</h2>
-                        <p class="balance-subtitle">tego miesiąca</p>
-                    </div>
-
-                    <div class="quick-stats">
-                        <div class="stat-box">
-                            <p class="stat-label">Wydane</p>
-                            <p class="stat-value" id="monthlyExpenses">0 zł</p>
-                        </div>
-                        <div class="stat-box">
-                            <p class="stat-label">Zaoszczędzono</p>
-                            <p class="stat-value positive" id="monthlySavings">0 zł</p>
-                        </div>
-                    </div>
-
-                    <div class="ai-coach-card">
-                        <div class="coach-header">
-                            <h3>💡 Porada AI</h3>
-                        </div>
-                        <p class="coach-text" id="aiTip">Załadowuję porady dla Ciebie...</p>
-                        <button class="btn-secondary" onclick="generateAITip()">Nowa porada</button>
-                    </div>
-
-                    <div class="recent-expenses">
-                        <h3>Ostatnie wydatki</h3>
-                        <div id="recentList" class="expenses-list">
-                            <p class="empty-state">Brak wydatków. Zacznij od dodania swoich wydatków!</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Expenses Tab -->
-            <section id="expenses" class="tab-content">
-                <div class="expenses-section">
-                    <div class="filter-group">
-                        <button class="filter-btn active" data-filter="all">Wszystkie</button>
-                        <button class="filter-btn" data-filter="food">🍔 Jedzenie</button>
-                        <button class="filter-btn" data-filter="transport">🚗 Transport</button>
-                        <button class="filter-btn" data-filter="entertainment">🎮 Rozrywka</button>
-                        <button class="filter-btn" data-filter="utilities">💡 Opłaty</button>
-                        <button class="filter-btn" data-filter="other">📦 Inne</button>
-                    </div>
-
-                    <div id="expensesList" class="expenses-list">
-                        <p class="empty-state">Brak wydatków w tej kategorii.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Add Expense Tab -->
-            <section id="add" class="tab-content">
-                <div class="add-expense-section">
-                    <h2>Dodaj wydatek</h2>
-
-                    <div class="input-group">
-                        <label>Kwota (zł)</label>
-                        <input type="number" id="expenseAmount" placeholder="0.00" step="0.01" min="0">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Kategoria</label>
-                        <select id="expenseCategory">
-                            <option value="food">🍔 Jedzenie</option>
-                            <option value="transport">🚗 Transport</option>
-                            <option value="entertainment">🎮 Rozrywka</option>
-                            <option value="utilities">💡 Opłaty</option>
-                            <option value="other">📦 Inne</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Opis</label>
-                        <input type="text" id="expenseDescription" placeholder="np. Obiad w restauracji">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Data</label>
-                        <input type="date" id="expenseDate">
-                    </div>
-
-                    <div class="receipt-section">
-                        <label>Skan paragonu (opcjonalnie)</label>
-                        <div class="file-upload">
-                            <input type="file" id="receiptFile" accept="image/*" capture="environment">
-                            <p>📷 Dodaj zdjęcie paragonu</p>
-                        </div>
-                        <div id="receiptPreview" class="receipt-preview"></div>
-                    </div>
-
-                    <button class="btn-primary" onclick="addExpense()">Dodaj wydatek</button>
-                </div>
-            </section>
-
-            <!-- Goals Tab -->
-            <section id="goals" class="tab-content">
-                <div class="goals-section">
-                    <h2>Twoje cele oszczędnościowe</h2>
-
-                    <div class="add-goal-form">
-                        <div class="input-group">
-                            <label>Nazwa celu</label>
-                            <input type="text" id="goalName" placeholder="np. Nowy laptop">
-                        </div>
-
-                        <div class="input-group">
-                            <label>Docelowa kwota (zł)</label>
-                            <input type="number" id="goalAmount" placeholder="0.00" step="0.01" min="0">
-                        </div>
-
-                        <div class="input-group">
-                            <label>Termin (miesiące)</label>
-                            <input type="number" id="goalMonths" placeholder="6" min="1">
-                        </div>
-
-                        <button class="btn-primary" onclick="addGoal()">Utwórz cel</button>
-                    </div>
-
-                    <div id="goalsList" class="goals-list">
-                        <p class="empty-state">Brak celów. Dodaj swój pierwszy cel oszczędnościowy!</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Insights Tab -->
-            <section id="insights" class="tab-content">
-                <div class="insights-section">
-                    <h2>Analiza wydatków</h2>
-
-                    <div class="chart-container">
-                        <canvas id="expensesChart"></canvas>
-                    </div>
-
-                    <div class="insights-stats">
-                        <div class="insight-card">
-                            <p class="insight-label">Największa kategoria</p>
-                            <p class="insight-value" id="topCategory">Brak danych</p>
-                        </div>
-
-                        <div class="insight-card">
-                            <p class="insight-label">Średni dzienny wydatek</p>
-                            <p class="insight-value" id="avgDaily">0 zł</p>
-                        </div>
-
-                        <div class="insight-card">
-                            <p class="insight-label">Trend</p>
-                            <p class="insight-value" id="trendInfo">Czekam na dane...</p>
-                        </div>
-                    </div>
-
-                    <div class="recommendations">
-                        <h3>Rekomendacje</h3>
-                        <div id="recommendationsList"></div>
-                    </div>
-                </div>
-            </section>
-        </main>
+<body class="dark-mode">
+    <div class="header">
+        <div class="header-content">
+            <h1>💜 Savings Coach</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js"></script>
+    <div class="container">
+        <!-- QUICK STATS -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">💰 Wydane dziś</div>
+                <div class="stat-value" id="todayExpense">0 PLN</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📊 Ten miesiąc</div>
+                <div class="stat-value" id="monthExpense">0 PLN</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🎯 Oszczędzono</div>
+                <div class="stat-value" id="totalSaved">0 PLN</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚠️ Największy wydatek</div>
+                <div class="stat-value" id="largestExpense">0 PLN</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content-grid">
+            <!-- ADD EXPENSE CARD -->
+            <div class="card">
+                <div class="card-title">➕ Dodaj wydatek</div>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('manual', this)">Ręcznie</button>
+                    <button class="tab" onclick="switchTab('receipt', this)">Paragon</button>
+                </div>
+
+                <div id="manual-tab" class="tab-content">
+                    <input type="number" id="expenseAmount" placeholder="Kwota (PLN)" step="0.01" min="0">
+                    <select id="expenseCategory">
+                        <option value="">Wybierz kategorię</option>
+                        <option value="🍔 Jedzenie">🍔 Jedzenie</option>
+                        <option value="🚗 Transport">🚗 Transport</option>
+                        <option value="🏠 Mieszkanie">🏠 Mieszkanie</option>
+                        <option value="💪 Zdrowie">💪 Zdrowie</option>
+                        <option value="🎬 Rozrywka">🎬 Rozrywka</option>
+                        <option value="👗 Zakupy">👗 Zakupy</option>
+                        <option value="📚 Edukacja">📚 Edukacja</option>
+                        <option value="⚡ Utility">⚡ Utility</option>
+                        <option value="🎁 Inne">🎁 Inne</option>
+                    </select>
+                    <input type="text" id="expenseNote" placeholder="Opis (opcjonalnie)">
+                    <button class="btn btn-primary" onclick="addExpense()" style="width: 100%; margin-top: 12px;">Dodaj wydatek</button>
+                </div>
+
+                <div id="receipt-tab" class="tab-content" style="display: none;">
+                    <div id="qr-reader" style="width: 100%; margin-bottom: 16px; display: none;"></div>
+                    <button class="btn btn-secondary" onclick="startScanning()" style="width: 100%;">📷 Skanuj paragon</button>
+                    <p style="text-align: center; color: #808080; font-size: 13px; margin-top: 12px;">Funkcja skanowania wymaga aparatu</p>
+                </div>
+            </div>
+
+            <!-- ANALYTICS CARD -->
+            <div class="card">
+                <div class="card-title">📊 Analiza wydatków</div>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+                <div id="categoryBreakdown"></div>
+            </div>
+        </div>
+
+        <!-- SECTIONS -->
+
+        <!-- HOME SECTION -->
+        <div id="home-section" class="section active">
+            <!-- RECENT EXPENSES -->
+            <div class="card" style="margin-bottom: 32px;">
+                <div class="card-title">📝 Ostatnie wydatki</div>
+                <div id="expensesList"></div>
+            </div>
+
+            <!-- AI COACH -->
+            <div class="card">
+                <div class="card-title">🤖 AI Coach</div>
+                <div class="coach-message">
+                    <div class="coach-emoji" id="coachEmoji">💡</div>
+                    <div class="coach-text" id="coachText">Ładuję poradę dla Ciebie...</div>
+                </div>
+                <button class="btn btn-secondary" onclick="generateCoachAdvice()" style="width: 100%;">Następna porada</button>
+            </div>
+        </div>
+
+        <!-- STATISTICS SECTION -->
+        <div id="statistics-section" class="section">
+            <div class="card">
+                <div class="card-title">📈 Szczegółowe statystyki</div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">📊 Średnia dzienna</div>
+                    <div class="stat-value" id="avgDaily">0 PLN</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">🏆 Kategoria wiodąca</div>
+                    <div class="stat-value" id="topCategory">Brak danych</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">⚠️ Kategoria najbardziej kosztowna</div>
+                    <div class="stat-value" id="costlyCategory">Brak danych</div>
+                    <div id="costlyAmount" style="font-size: 14px; color: #a0a0a0; margin-top: 8px;"></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">📋 Liczba wydatków</div>
+                    <div class="stat-value" id="expenseCount">0</div>
+                </div>
+
+                <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 18px;">Wydatki po kategoriach:</h3>
+                <div id="categoriesStats"></div>
+            </div>
+        </div>
+
+        <!-- GOALS SECTION -->
+        <div id="goals-section" class="section">
+            <div class="card">
+                <div class="card-title">🎯 Cele oszczędnościowe</div>
+                
+                <div style="margin-bottom: 24px;">
+                    <input type="text" id="goalName" placeholder="Nazwa celu (np. Wakacje)">
+                    <input type="number" id="goalTarget" placeholder="Docelowa kwota (PLN)" step="0.01" min="0">
+                    <input type="number" id="goalCurrent" placeholder="Bieżąca kwota (PLN)" step="0.01" min="0" value="0">
+                    <button class="btn btn-primary" onclick="addGoal()" style="width: 100%;">Dodaj cel</button>
+                </div>
+
+                <div id="goalsList"></div>
+            </div>
+        </div>
+
+        <!-- SETTINGS SECTION -->
+        <div id="settings-section" class="section">
+            <div class="card">
+                <div class="card-title">⚙️ Ustawienia</div>
+                
+                <h3 style="margin: 24px 0 16px 0; font-size: 16px; font-weight: 600;">💾 Eksport danych</h3>
+                <button class="btn btn-secondary" onclick="exportData()" style="width: 100%; margin-bottom: 12px;">📥 Pobierz dane (JSON)</button>
+                
+                <h3 style="margin: 24px 0 16px 0; font-size: 16px; font-weight: 600;">🗑️ Zmiana danych</h3>
+                <button class="btn btn-secondary" onclick="importData()" style="width: 100%; margin-bottom: 12px;">📤 Wgraj dane</button>
+                <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+                
+                <h3 style="margin: 24px 0 16px 0; font-size: 16px; font-weight: 600;">🧹 Czyszczenie</h3>
+                <button class="btn btn-secondary" onclick="clearMonth()" style="width: 100%; margin-bottom: 12px;">Wyczyść ten miesiąc</button>
+                <button class="btn btn-secondary" onclick="clearAllData()" style="width: 100%; background: rgba(255, 76, 76, 0.2); color: #ff4c4c;">⚠️ Wyczyść wszystko</button>
+                
+                <h3 style="margin: 24px 0 16px 0; font-size: 16px; font-weight: 600;">ℹ️ Informacje</h3>
+                <p style="color: #a0a0a0; font-size: 14px;">Savings Coach v1.0 💜<br>Aplikacja do śledzenia wydatków z AI coachingu</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchSection('home')">
+            <div class="nav-icon">🏠</div>
+            <div>Strona główna</div>
+        </div>
+        <div class="nav-item" onclick="switchSection('statistics')">
+            <div class="nav-icon">📊</div>
+            <div>Statystyki</div>
+        </div>
+        <div class="nav-item" onclick="switchSection('goals')">
+            <div class="nav-icon">🎯</div>
+            <div>Cele</div>
+        </div>
+        <div class="nav-item" onclick="switchSection('settings')">
+            <div class="nav-icon">⚙️</div>
+            <div>Ustawienia</div>
+        </div>
+    </div>
+
+    <script>
+        // DATA MANAGEMENT
+        const DATA_KEY = 'savingsCoachData';
+        const GOALS_KEY = 'savingsCoachGoals';
+
+        function saveData() {
+            const expenses = document.querySelectorAll('.expense-item');
+            const data = Array.from(expenses).map(exp => ({
+                amount: parseFloat(exp.dataset.amount),
+                category: exp.dataset.category,
+                note: exp.dataset.note,
+                date: exp.dataset.date
+            }));
+            localStorage.setItem(DATA_KEY, JSON.stringify(data));
+        }
+
+        function loadData() {
+            const data = localStorage.getItem(DATA_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveGoals(goals) {
+            localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+        }
+
+        function loadGoals() {
+            const goals = localStorage.getItem(GOALS_KEY);
+            return goals ? JSON.parse(goals) : [];
+        }
+
+        // ADD EXPENSE
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const category = document.getElementById('expenseCategory').value;
+            const note = document.getElementById('expenseNote').value;
+
+            if (!amount || amount <= 0 || !category) {
+                alert('Proszę wypełnić wszystkie wymagane pola');
+                return;
+            }
+
+            const expenses = loadData();
+            expenses.push({
+                amount,
+                category,
+                note,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem(DATA_KEY, JSON.stringify(expenses));
+
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseCategory').value = '';
+            document.getElementById('expenseNote').value = '';
+
+            updateUI();
+        }
+
+        // DISPLAY EXPENSES
+        function displayExpenses() {
+            const expenses = loadData();
+            const expensesList = document.getElementById('expensesList');
+            expensesList.innerHTML = '';
+
+            if (expenses.length === 0) {
+                expensesList.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Brak wydatków</div></div>';
+                return;
+            }
+
+            const sortedExpenses = [...expenses].reverse().slice(0, 10);
+
+            sortedExpenses.forEach((exp, index) => {
+                const date = new Date(exp.date);
+                const dateStr = date.toLocaleDateString('pl-PL');
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                div.dataset.amount = exp.amount;
+                div.dataset.category = exp.category;
+                div.dataset.note = exp.note;
+                div.dataset.date = exp.date;
+                div.innerHTML = `
+                    <div class="expense-info">
+                        <div class="expense-icon">${exp.category.split(' ')[0]}</div>
+                        <div class="expense-details">
+                            <div class="expense-category">${exp.category}</div>
+                            <div class="expense-date">${dateStr}${exp.note ? ' • ' + exp.note : ''}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="expense-amount">-${exp.amount.toFixed(2)} PLN</div>
+                        <button class="delete-btn" onclick="deleteExpense(${expenses.length - 1 - index})">Usuń</button>
+                    </div>
+                `;
+                expensesList.appendChild(div);
+            });
+        }
+
+        function deleteExpense(index) {
+            const expenses = loadData();
+            expenses.splice(index, 1);
+            localStorage.setItem(DATA_KEY, JSON.stringify(expenses));
+            updateUI();
+        }
+
+        // STATISTICS
+        function updateStats() {
+            const expenses = loadData();
+            const today = new Date().toDateString();
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+
+            let todayTotal = 0;
+            let monthTotal = 0;
+            let largestExpense = 0;
+
+            expenses.forEach(exp => {
+                const expDate = new Date(exp.date);
+                if (expDate.toDateString() === today) {
+                    todayTotal += exp.amount;
+                }
+                if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear) {
+                    monthTotal += exp.amount;
+                }
+                if (exp.amount > largestExpense) {
+                    largestExpense = exp.amount;
+                }
+            });
+
+            document.getElementById('todayExpense').textContent = todayTotal.toFixed(2) + ' PLN';
+            document.getElementById('monthExpense').textContent = monthTotal.toFixed(2) + ' PLN';
+            document.getElementById('largestExpense').textContent = largestExpense > 0 ? largestExpense.toFixed(2) + ' PLN' : '0 PLN';
+            document.getElementById('totalSaved').textContent = (monthTotal > 0 ? (5000 - monthTotal).toFixed(2) : '0') + ' PLN';
+
+            // Detailed stats
+            const avgDaily = expenses.length > 0 ? (monthTotal / 30).toFixed(2) : '0';
+            document.getElementById('avgDaily').textContent = avgDaily + ' PLN';
+
+            // Category stats
+            const categoryMap = {};
+            expenses.forEach(exp => {
+                if (exp.date.substring(0, 7) === new Date().toISOString().substring(0, 7)) {
+                    categoryMap[exp.category] = (categoryMap[exp.category] || 0) + exp.amount;
+                }
+            });
+
+            const topCategory = Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0];
+            if (topCategory) {
+                document.getElementById('topCategory').textContent = topCategory[0];
+                const costlyCategory = topCategory[0];
+                const costlyAmount = topCategory[1];
+                document.getElementById('costlyCategory').textContent = costlyCategory;
+                document.getElementById('costlyAmount').textContent = `${costlyAmount.toFixed(2)} PLN`;
+            }
+
+            document.getElementById('expenseCount').textContent = expenses.length;
+
+            // Category breakdown
+            const breakdown = document.getElementById('categoryBreakdown');
+            breakdown.innerHTML = '';
+            Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).forEach(([cat, amount]) => {
+                const percent = ((amount / monthTotal) * 100).toFixed(1);
+                breakdown.innerHTML += `
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                            <span>${cat}</span>
+                            <span class="gradient-text">${amount.toFixed(2)} PLN (${percent}%)</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Categories stats page
+            const categoriesStats = document.getElementById('categoriesStats');
+            categoriesStats.innerHTML = '';
+            Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).forEach(([cat, amount]) => {
+                categoriesStats.innerHTML += `
+                    <div class="stat-card" style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>${cat}</div>
+                            <div class="gradient-text" style="font-weight: 700; font-size: 18px;">${amount.toFixed(2)} PLN</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // CHARTS
+        function updateChart() {
+            const expenses = loadData();
+            const categoryMap = {};
+
+            expenses.forEach(exp => {
+                if (exp.date.substring(0, 7) === new Date().toISOString().substring(0, 7)) {
+                    categoryMap[exp.category] = (categoryMap[exp.category] || 0) + exp.amount;
+                }
+            });
+
+            const ctx = document.getElementById('expenseChart');
+            if (!ctx) return;
+
+            if (window.expenseChartInstance) {
+                window.expenseChartInstance.destroy();
+            }
+
+            const colors = ['#6c5ce7', '#a29bfe', '#74b9ff', '#0984e3', '#6c7a89', '#fd79a8', '#fdcb6e', '#55efc4'];
+
+            window.expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryMap),
+                    datasets: [{
+                        data: Object.values(categoryMap),
+                        backgroundColor: colors.slice(0, Object.keys(categoryMap).length),
+                        borderColor: 'rgba(15, 15, 30, 0.9)',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                padding: 16,
+                                font: { size: 13, weight: '600' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // GOALS
+        function addGoal() {
+            const name = document.getElementById('goalName').value;
+            const target = parseFloat(document.getElementById('goalTarget').value);
+            const current = parseFloat(document.getElementById('goalCurrent').value);
+
+            if (!name || !target || target <= 0) {
+                alert('Proszę wypełnić wymagane pola');
+                return;
+            }
+
+            const goals = loadGoals();
+            goals.push({ name, target, current: current || 0 });
+            saveGoals(goals);
+
+            document.getElementById('goalName').value = '';
+            document.getElementById('goalTarget').value = '';
+            document.getElementById('goalCurrent').value = '0';
+
+            updateGoals();
+        }
+
+        function updateGoals() {
+            const goals = loadGoals();
+            const goalsList = document.getElementById('goalsList');
+            goalsList.innerHTML = '';
+
+            if (goals.length === 0) {
+                goalsList.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">Brak celów</div></div>';
+                return;
+            }
+
+            goals.forEach((goal, index) => {
+                const percent = Math.min((goal.current / goal.target) * 100, 100);
+                goalsList.innerHTML += `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-name">${goal.name}</div>
+                            <button class="delete-btn" onclick="deleteGoal(${index})">Usuń</button>
+                        </div>
+                        <div class="goal-amount">${goal.current.toFixed(2)} PLN / ${goal.target.toFixed(2)} PLN</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <div style="text-align: right; margin-top: 8px; color: #a0a0a0; font-size: 13px;">
+                            ${percent.toFixed(1)}% ukończone
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteGoal(index) {
+            const goals = loadGoals();
+            goals.splice(index, 1);
+            saveGoals(goals);
+            updateGoals();
+        }
+
+        // COACH ADVICE
+        const coachAdvices = [
+            { emoji: '💡', text: 'Porada: Zawsze siedź wypłatę na koncie oszczędnościowym zanim ją wydasz!' },
+            { emoji: '🎯', text: 'Zestaw sobie małe, osiągalne cele - to lepsze niż jedno duże marzenie!' },
+            { emoji: '📊', text: 'Przeglądaj swoje wydatki co tydzień - świadomość to połowa sukcesu!' },
+            { emoji: '⏰', text: 'Poczekaj 24h zanim kupisz coś, czego nie planowałeś - zmieni to Twoją decyzję!' },
+            { emoji: '💰', text: 'Reguła 50/30/20: 50% potrzeby, 30% chęci, 20% oszczędności!' },
+            { emoji: '🚀', text: 'Każdy złoty liczy się! Nawet małe oszczędności prowadzą do dużych celów.' },
+            { emoji: '✨', text: 'Naucz się mówić "nie" импульсивnym zakupom - To jest super mocy!' },
+            { emoji: '🎁', text: 'Zamiast wydawać na rzeczy, inwestuj w doświadczenia i nauki.' },
+            { emoji: '🔥', text: 'Wyłącz powiadomienia o promocjach - nie widzisz, nie kusisz się!' },
+            { emoji: '🌟', text: 'Gratulacje za śledzenie wydatków - to pierwszy krok do finansowej wolności!' }
+        ];
+
+        function generateCoachAdvice() {
+            const advice = coachAdvices[Math.floor(Math.random() * coachAdvices.length)];
+            document.getElementById('coachEmoji').textContent = advice.emoji;
+            document.getElementById('coachText').textContent = advice.text;
+        }
+
+        // THEME TOGGLE
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                btn.textContent = '☀️';
+            } else {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                btn.textContent = '🌙';
+            }
+        }
+
+        // NAVIGATION
+        function switchSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.closest('.nav-item').classList.add('active');
+
+            if (section === 'statistics') {
+                updateChart();
+            }
+        }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + '-tab').style.display = 'block';
+            btn.classList.add('active');
+        }
+
+        // EXPORT/IMPORT
+        function exportData() {
+            const expenses = loadData();
+            const goals = loadGoals();
+            const data = { expenses, goals, exportDate: new Date().toISOString() };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'savings-coach-backup.json';
+            a.click();
+        }
+
+        function importData() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    localStorage.setItem(DATA_KEY, JSON.stringify(data.expenses || []));
+                    localStorage.setItem(GOALS_KEY, JSON.stringify(data.goals || []));
+                    alert('Dane zaimportowane pomyślnie!');
+                    updateUI();
+                } catch (err) {
+                    alert('Błąd podczas importu danych');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // CLEAR
+        function clearMonth() {
+            if (!confirm('Jesteś pewny? To usunie wszystkie wydatki z tego miesiąca!')) return;
+            const expenses = loadData();
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+            const filtered = expenses.filter(exp => {
+                const expDate = new Date(exp.date);
+                return !(expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear);
+            });
+            localStorage.setItem(DATA_KEY, JSON.stringify(filtered));
+            updateUI();
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ To usunie WSZYSTKIE dane! Pewny?')) return;
+            localStorage.clear();
+            updateUI();
+        }
+
+        // UI UPDATE
+        function updateUI() {
+            displayExpenses();
+            updateStats();
+            updateGoals();
+            generateCoachAdvice();
+            if (document.getElementById('expenseChart').offsetHeight > 0) {
+                updateChart();
+            }
+        }
+
+        // RECEIPT SCANNING
+        function startScanning() {
+            alert('Funkcja skanowania wymaga implementacji API aparatu. Na razie możesz dodawać wydatki ręcznie!');
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            generateCoachAdvice();
+        });
+    </script>
 </body>
 </html>
