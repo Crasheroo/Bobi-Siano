@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bobisiano",
+  "compatibility_date": "2026-05-12",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "moneytrack"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
