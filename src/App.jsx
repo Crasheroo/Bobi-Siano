@@ -80,8 +80,10 @@ export default function App() {
     }
   }, [])
 
+  const basename = import.meta.env.PROD ? '/Bobi-Siano' : '/'
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         {!profile.setupDone ? (
           <>
