@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Area, AreaChart
@@ -10,6 +11,7 @@ import styles from './Analytics.module.css'
 const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#5e5ce6', '#34c759', '#ffd60a', '#64d2ff', '#98989e']
 
 export default function Analytics() {
+  const navigate = useNavigate()
   const { expenses, customCategories, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const [activeTab, setActiveTab] = useState('categories')
@@ -80,8 +82,15 @@ export default function Analytics() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Analiza</h1>
-        <p className={styles.subtitle}>{MONTH_NAMES[now.getMonth()]} {now.getFullYear()}</p>
+        <button className="back-home-btn" onClick={() => navigate('/')} aria-label="Pulpit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <div>
+          <h1 className={styles.title}>Analiza</h1>
+          <p className={styles.subtitle}>{MONTH_NAMES[now.getMonth()]} {now.getFullYear()}</p>
+        </div>
       </div>
 
       {/* Score card */}

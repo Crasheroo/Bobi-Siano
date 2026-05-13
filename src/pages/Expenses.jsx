@@ -62,6 +62,11 @@ export default function Expenses() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
+        <button className="back-home-btn" onClick={() => navigate('/')} aria-label="Pulpit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
         <h1 className={styles.title}>Wydatki</h1>
         <button className={styles.addBtn} onClick={() => navigate('/add-expense')}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
