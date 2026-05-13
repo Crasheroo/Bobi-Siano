@@ -74,6 +74,7 @@ const useStore = create(
       settings: {
         theme: 'dark',
         accent: '#0a84ff',
+        language: 'pl',
       },
       setSettings: (data) =>
         set((s) => ({ settings: { ...s.settings, ...data } })),

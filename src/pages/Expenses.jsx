@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, formatCurrency, formatDate } from '../utils/constants.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Expenses.module.css'
 
 export default function Expenses() {
   const navigate = useNavigate()
+  const t = useTranslation()
   const { expenses, deleteExpense, editExpense, customCategories } = useStore()
   const allCategories = [...CATEGORIES, ...customCategories]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
@@ -67,7 +69,7 @@ export default function Expenses() {
             <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className={styles.title}>Wydatki</h1>
+        <h1 className={styles.title}>{t.expenses.title}</h1>
         <button className={styles.addBtn} onClick={() => navigate('/add-expense')}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -84,7 +86,7 @@ export default function Expenses() {
         <input
           className={styles.search}
           type="text"
-          placeholder="Szukaj wydatku..."
+          placeholder={t.expenses.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -98,7 +100,7 @@ export default function Expenses() {
           className={`${styles.filterBtn} ${filterCat === 'all' ? styles.filterBtnActive : ''}`}
           onClick={() => setFilterCat('all')}
         >
-          Wszystkie
+          {t.expenses.all}
         </button>
         {allCategories.map((cat) => (
           <button
@@ -115,7 +117,7 @@ export default function Expenses() {
       {filtered.length > 0 && (
         <div className={styles.summary}>
           <p className={styles.summaryText}>
-            {filtered.length} transakcji · Suma: <strong>{formatCurrency(totalFiltered)}</strong>
+            {t.expenses.transactionsSum(filtered.length)} <strong>{formatCurrency(totalFiltered)}</strong>
           </p>
         </div>
       )}
@@ -124,7 +126,7 @@ export default function Expenses() {
         {groupedByDate.length === 0 ? (
           <div className={styles.empty}>
             <span>🔍</span>
-            <p>Brak wydatków do wyświetlenia</p>
+            <p>{t.expenses.noExpenses}</p>
           </div>
         ) : (
           groupedByDate.map((group, gi) => (
@@ -154,7 +156,7 @@ export default function Expenses() {
                               className={styles.editBtn}
                               onClick={(ev) => { ev.stopPropagation(); openEdit(e) }}
                             >
-                              Edytuj
+                              {t.common.edit}
                             </button>
                             <button
                               className={styles.deleteBtn}
@@ -164,7 +166,7 @@ export default function Expenses() {
                                 setSwipedId(null)
                               }}
                             >
-                              Usuń
+                              {t.common.delete}
                             </button>
                           </>
                         )}
@@ -182,10 +184,10 @@ export default function Expenses() {
       {editingExpense && (
         <div className={styles.editOverlay} onClick={() => setEditingExpense(null)}>
           <div className={styles.editSheet} onClick={(e) => e.stopPropagation()}>
-            <p className={styles.editSheetTitle}>Edytuj wydatek</p>
+            <p className={styles.editSheetTitle}>{t.expenses.editTitle}</p>
 
             <div className={styles.editField}>
-              <label className={styles.editLabel}>Kwota (PLN)</label>
+              <label className={styles.editLabel}>{t.common.amount}</label>
               <input
                 className={styles.editInput}
                 type="number"
@@ -197,7 +199,7 @@ export default function Expenses() {
             </div>
 
             <div className={styles.editField}>
-              <label className={styles.editLabel}>Opis</label>
+              <label className={styles.editLabel}>{t.common.description}</label>
               <input
                 className={styles.editInput}
                 type="text"
@@ -207,7 +209,7 @@ export default function Expenses() {
             </div>
 
             <div className={styles.editField}>
-              <label className={styles.editLabel}>Data</label>
+              <label className={styles.editLabel}>{t.common.date}</label>
               <input
                 className={styles.editInput}
                 type="date"
@@ -217,7 +219,7 @@ export default function Expenses() {
             </div>
 
             <div className={styles.editField}>
-              <label className={styles.editLabel}>Kategoria</label>
+              <label className={styles.editLabel}>{t.common.category}</label>
               <div className={styles.editCategories}>
                 {allCategories.map((cat) => (
                   <button
@@ -233,8 +235,8 @@ export default function Expenses() {
             </div>
 
             <div className={styles.editActions}>
-              <button className={styles.editSaveBtn} onClick={saveEdit}>Zapisz</button>
-              <button className={styles.editCancelBtn} onClick={() => setEditingExpense(null)}>Anuluj</button>
+              <button className={styles.editSaveBtn} onClick={saveEdit}>{t.common.save}</button>
+              <button className={styles.editCancelBtn} onClick={() => setEditingExpense(null)}>{t.common.cancel}</button>
             </div>
           </div>
         </div>

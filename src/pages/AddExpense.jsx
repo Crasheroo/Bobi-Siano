@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES } from '../utils/constants.js'
 import { scanReceipt } from '../services/ocr.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './AddExpense.module.css'
 
 export default function AddExpense() {
   const navigate = useNavigate()
+  const t = useTranslation()
   const { addExpense, customCategories } = useStore()
   const fileRef = useRef(null)
   const allCategories = [...CATEGORIES, ...customCategories]
@@ -22,7 +24,7 @@ export default function AddExpense() {
 
   const handleSubmit = () => {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      setError('Podaj poprawną kwotę')
+      setError(t.addExpense.errorAmount)
       return
     }
     addExpense({
@@ -59,7 +61,7 @@ export default function AddExpense() {
         if (result.category) setCategory(result.category)
         if (result.date) setDate(result.date)
       } else {
-        setError('Nie udało się odczytać paragonu. Wpisz dane ręcznie.')
+        setError(t.addExpense.errorScan)
       }
     } catch (err) {
       setError('Błąd skanowania: ' + (err?.message || 'Spróbuj ponownie'))
@@ -77,7 +79,7 @@ export default function AddExpense() {
             <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className={styles.title}>Nowy wydatek</h1>
+        <h1 className={styles.title}>{t.addExpense.title}</h1>
         <div style={{ width: 40 }} />
       </div>
 
@@ -101,7 +103,7 @@ export default function AddExpense() {
               <div className={styles.scanProgressBar}>
                 <div className={styles.scanProgressFill} style={{ width: `${scanProgress}%` }} />
               </div>
-              <span>Skanuję paragon... {scanProgress}%</span>
+              <span>{t.addExpense.scanning(scanProgress)}</span>
             </div>
           ) : (
             <>
@@ -109,20 +111,20 @@ export default function AddExpense() {
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.8"/>
               </svg>
-              Skanuj paragon
+              {t.addExpense.scanBtn}
             </>
           )}
         </button>
-        <p className={styles.scanNote}>Działa offline — bez AI, bez kosztów</p>
+        <p className={styles.scanNote}>{t.addExpense.scanNote}</p>
       </div>
 
       {scanResult && (
         <div className={styles.scanSuccess}>
           <span>✅</span>
           <div>
-            <p className={styles.scanStore}>{scanResult.store || 'Paragon zeskanowany'}</p>
+            <p className={styles.scanStore}>{scanResult.store || t.addExpense.scanned}</p>
             {scanResult.items && scanResult.items.length > 0 && (
-              <p className={styles.scanItems}>{scanResult.items.length} pozycji wykrytych</p>
+              <p className={styles.scanItems}>{t.addExpense.itemsDetected(scanResult.items.length)}</p>
             )}
           </div>
         </div>
@@ -146,11 +148,11 @@ export default function AddExpense() {
 
         {/* Description */}
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Opis</label>
+          <label className={styles.fieldLabel}>{t.common.description}</label>
           <input
             className={styles.fieldInput}
             type="text"
-            placeholder="Np. Lidl, Uber, Netflix..."
+            placeholder={t.addExpense.descPlaceholder}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -158,7 +160,7 @@ export default function AddExpense() {
 
         {/* Date */}
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Data</label>
+          <label className={styles.fieldLabel}>{t.common.date}</label>
           <input
             className={styles.fieldInput}
             type="date"
@@ -169,7 +171,7 @@ export default function AddExpense() {
 
         {/* Category */}
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Kategoria</label>
+          <label className={styles.fieldLabel}>{t.common.category}</label>
           <div className={styles.categories}>
             {allCategories.map((cat) => (
               <button
@@ -188,7 +190,7 @@ export default function AddExpense() {
 
       <div className={styles.footer}>
         <button className={styles.submitBtn} onClick={handleSubmit}>
-          Dodaj wydatek
+          {t.addExpense.addBtn}
         </button>
       </div>
     </div>

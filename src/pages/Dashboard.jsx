@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency, formatDate, MONTH_NAMES } from '../utils/constants.js'
+import { CATEGORIES, formatCurrency, formatDate } from '../utils/constants.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { profile, expenses, recurring, goals, monthlySalaries, customCategories, getCurrentMonthExpenses, getMonthlyRecurringTotal, getSalaryForMonth, setMonthlySalary } = useStore()
+  const t = useTranslation()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
@@ -14,7 +16,7 @@ export default function Dashboard() {
   const [salaryInput, setSalaryInput] = useState('')
 
   const now = new Date()
-  const monthName = MONTH_NAMES[now.getMonth()]
+  const monthName = t.months[now.getMonth()]
 
   const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
   const salarySetThisMonth = (monthlySalaries || []).some(
@@ -49,9 +51,9 @@ export default function Dashboard() {
 
   const greeting = () => {
     const h = now.getHours()
-    if (h < 12) return 'Dzień dobry'
-    if (h < 18) return 'Cześć'
-    return 'Dobry wieczór'
+    if (h < 12) return t.dashboard.goodMorning
+    if (h < 18) return t.dashboard.hello
+    return t.dashboard.goodEvening
   }
 
   return (
@@ -72,7 +74,7 @@ export default function Dashboard() {
 
       {/* Balance card */}
       <div className={styles.balanceCard}>
-        <p className={styles.balanceLabel}>Pozostało w tym miesiącu</p>
+        <p className={styles.balanceLabel}>{t.dashboard.remaining}</p>
         <p className={styles.balanceAmount} style={{ color: remaining >= 0 ? '#30d158' : '#ff453a' }}>
           {formatCurrency(remaining)}
         </p>
@@ -86,7 +88,7 @@ export default function Dashboard() {
           />
         </div>
         <div className={styles.balanceMeta}>
-          <span>Wydano: {formatCurrency(totalSpent)}</span>
+          <span>{t.dashboard.spent}: {formatCurrency(totalSpent)}</span>
           {editingSalary ? (
             <span className={styles.salaryEditRow}>
               <input
@@ -111,7 +113,7 @@ export default function Dashboard() {
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              {salarySetThisMonth ? `Wypl.: ${formatCurrency(currentSalary)}` : 'Wpisz wypłatę'}
+              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${formatCurrency(currentSalary)}` : t.dashboard.enterSalary}
             </button>
           )}
         </div>
@@ -120,21 +122,21 @@ export default function Dashboard() {
       {/* Quick stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
-          <p className={styles.statLabel}>Stałe płatności</p>
+          <p className={styles.statLabel}>{t.dashboard.recurringPayments}</p>
           <p className={styles.statValue}>{formatCurrency(recurringTotal)}</p>
-          <p className={styles.statSub}>miesięcznie</p>
+          <p className={styles.statSub}>{t.dashboard.monthly}</p>
         </div>
         <div className={styles.statCard}>
-          <p className={styles.statLabel}>Wydatki</p>
+          <p className={styles.statLabel}>{t.dashboard.expenses}</p>
           <p className={styles.statValue}>{formatCurrency(expensesTotal)}</p>
-          <p className={styles.statSub}>{monthExpenses.length} transakcji</p>
+          <p className={styles.statSub}>{monthExpenses.length} {t.dashboard.transactions}</p>
         </div>
         <div className={styles.statCard} style={{ borderColor: savingsRate >= 20 ? 'rgba(48,209,88,0.3)' : 'rgba(255,68,58,0.3)' }}>
-          <p className={styles.statLabel}>Oszczędności</p>
+          <p className={styles.statLabel}>{t.dashboard.savings}</p>
           <p className={styles.statValue} style={{ color: savingsRate >= 20 ? '#30d158' : savingsRate > 0 ? '#ff9f0a' : '#ff453a' }}>
             {savingsRate.toFixed(0)}%
           </p>
-          <p className={styles.statSub}>dochodu</p>
+          <p className={styles.statSub}>{t.dashboard.income}</p>
         </div>
       </div>
 
@@ -144,7 +146,7 @@ export default function Dashboard() {
           <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
         </svg>
-        Dodaj wydatek
+        {t.dashboard.addExpense}
       </button>
 
       {/* Goal widget */}
@@ -168,29 +170,29 @@ export default function Dashboard() {
           </div>
           {remaining > 0 && (
             <p className={styles.goalWidgetCapacity}>
-              Możesz odłożyć w tym miesiącu: <strong style={{ color: '#30d158' }}>{formatCurrency(remaining)}</strong>
+              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{formatCurrency(remaining)}</strong>
             </p>
           )}
         </div>
       ) : (
         <button className={styles.goalWidgetEmpty} onClick={() => navigate('/goals')}>
           <span>🎯</span>
-          <span>Ustaw cel oszczędnościowy</span>
+          <span>{t.dashboard.setSavingsGoal}</span>
         </button>
       )}
 
       {/* Recent expenses */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionTitle}>Ostatnie transakcje</p>
+          <p className={styles.sectionTitle}>{t.dashboard.recentTransactions}</p>
           <button className={styles.seeAll} onClick={() => navigate('/expenses')}>
-            Zobacz wszystkie
+            {t.dashboard.seeAll}
           </button>
         </div>
         {recentExpenses.length === 0 ? (
           <div className={styles.empty}>
             <span>🎯</span>
-            <p>Brak wydatków. Dodaj pierwszy!</p>
+            <p>{t.dashboard.noExpenses}</p>
           </div>
         ) : (
           <div className={styles.expenseList}>

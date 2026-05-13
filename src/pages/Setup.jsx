@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import useStore from '../store/useStore.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Setup.module.css'
 
 export default function Setup() {
+  const t = useTranslation()
   const { setProfile } = useStore()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
@@ -28,37 +30,35 @@ export default function Setup() {
             <img src="/logo.png" alt="Lucent" className={styles.bigIcon} />
           </div>
           <h1 className={styles.title}>Lucent</h1>
-          <p className={styles.subtitle}>
-            Dowiedz się, gdzie naprawdę znikają Twoje pieniądze. Inteligentna analiza wydatków z AI.
-          </p>
+          <p className={styles.subtitle}>{t.setup.subtitle}</p>
           <button className={styles.primaryBtn} onClick={() => setStep(1)}>
-            Zaczynamy
+            {t.setup.start}
           </button>
         </div>
       )}
 
       {step === 1 && (
         <div className={styles.slide} key="step1">
-          <h2 className={styles.stepTitle}>Jak masz na imię?</h2>
-          <p className={styles.stepSub}>Opcjonalne — możesz pominąć</p>
+          <h2 className={styles.stepTitle}>{t.setup.nameTitle}</h2>
+          <p className={styles.stepSub}>{t.setup.nameSub}</p>
           <input
             className={styles.input}
             type="text"
-            placeholder="Twoje imię"
+            placeholder={t.setup.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
           />
           <button className={styles.primaryBtn} onClick={() => setStep(2)}>
-            {name.trim() ? 'Dalej' : 'Pomiń'}
+            {name.trim() ? t.setup.next : t.setup.skip}
           </button>
         </div>
       )}
 
       {step === 2 && (
         <div className={styles.slide} key="step2">
-          <h2 className={styles.stepTitle}>Twoje wynagrodzenie netto</h2>
-          <p className={styles.stepSub}>Miesięczna kwota "na rękę" w PLN</p>
+          <h2 className={styles.stepTitle}>{t.setup.salaryTitle}</h2>
+          <p className={styles.stepSub}>{t.setup.salarySub}</p>
           <div className={styles.salaryWrap}>
             <input
               className={styles.salaryInput}
@@ -76,7 +76,7 @@ export default function Setup() {
             onClick={handleFinish}
             disabled={!salary || isNaN(Number(salary)) || Number(salary) <= 0}
           >
-            Zacznij śledzić
+            {t.setup.finish}
           </button>
         </div>
       )}

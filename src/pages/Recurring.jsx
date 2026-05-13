@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { formatCurrency, RECURRING_FREQUENCIES } from '../utils/constants.js'
+import { formatCurrency } from '../utils/constants.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Recurring.module.css'
 
 const RECURRING_ICONS = [
@@ -10,6 +11,7 @@ const RECURRING_ICONS = [
 
 export default function Recurring() {
   const navigate = useNavigate()
+  const t = useTranslation()
   const { recurring, addRecurring, deleteRecurring, toggleRecurring, getMonthlyRecurringTotal } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -22,8 +24,8 @@ export default function Recurring() {
   const yearlyTotal = monthlyTotal * 12
 
   const handleAdd = () => {
-    if (!name.trim()) { setError('Podaj nazwę'); return }
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) { setError('Podaj kwotę'); return }
+    if (!name.trim()) { setError(t.recurring.errorName); return }
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) { setError(t.recurring.errorAmount); return }
     addRecurring({ name: name.trim(), amount: Number(amount), frequency, icon })
     setName(''); setAmount(''); setFrequency('monthly'); setIcon('🏠'); setError(''); setShowForm(false)
   }
@@ -36,7 +38,7 @@ export default function Recurring() {
             <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className={styles.title}>Stałe płatności</h1>
+        <h1 className={styles.title}>{t.recurring.title}</h1>
         <button className={styles.addBtn} onClick={() => setShowForm(!showForm)}>
           {showForm ? '✕' : '+'}
         </button>
@@ -45,12 +47,12 @@ export default function Recurring() {
       {/* Summary */}
       <div className={styles.summaryCard}>
         <div className={styles.sumItem}>
-          <p className={styles.sumLabel}>Miesięcznie</p>
+          <p className={styles.sumLabel}>{t.recurring.monthly}</p>
           <p className={styles.sumValue}>{formatCurrency(monthlyTotal)}</p>
         </div>
         <div className={styles.sumDivider} />
         <div className={styles.sumItem}>
-          <p className={styles.sumLabel}>Rocznie</p>
+          <p className={styles.sumLabel}>{t.recurring.yearly}</p>
           <p className={styles.sumValue}>{formatCurrency(yearlyTotal)}</p>
         </div>
       </div>
@@ -58,7 +60,7 @@ export default function Recurring() {
       {/* Add form */}
       {showForm && (
         <div className={styles.form}>
-          <p className={styles.formTitle}>Nowa płatność cykliczna</p>
+          <p className={styles.formTitle}>{t.recurring.newPayment}</p>
           {error && <p className={styles.error}>{error}</p>}
 
           <div className={styles.iconPicker}>
@@ -76,7 +78,7 @@ export default function Recurring() {
           <input
             className={styles.input}
             type="text"
-            placeholder="Nazwa (np. Czynsz, Netflix, Kredyt)"
+            placeholder={t.recurring.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -86,7 +88,7 @@ export default function Recurring() {
               style={{ flex: 1 }}
               type="number"
               inputMode="decimal"
-              placeholder="Kwota (PLN)"
+              placeholder={t.common.amount}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
@@ -95,13 +97,13 @@ export default function Recurring() {
               value={frequency}
               onChange={(e) => setFrequency(e.target.value)}
             >
-              {RECURRING_FREQUENCIES.map((f) => (
-                <option key={f.id} value={f.id}>{f.label}</option>
+              {['monthly', 'yearly', 'weekly'].map((freq) => (
+                <option key={freq} value={freq}>{t.frequencies[freq]}</option>
               ))}
             </select>
           </div>
           <button className={styles.submitBtn} onClick={handleAdd}>
-            Dodaj płatność
+            {t.recurring.addBtn}
           </button>
         </div>
       )}
@@ -111,7 +113,7 @@ export default function Recurring() {
         {recurring.length === 0 ? (
           <div className={styles.empty}>
             <span>🔄</span>
-            <p>Brak stałych płatności. Dodaj czynsz, kredyt lub subskrypcje.</p>
+            <p>{t.recurring.empty}</p>
           </div>
         ) : (
           <div className={styles.items}>
@@ -124,8 +126,8 @@ export default function Recurring() {
                   <div className={styles.itemInfo}>
                     <p className={styles.itemName}>{r.name}</p>
                     <p className={styles.itemFreq}>
-                      {RECURRING_FREQUENCIES.find(f => f.id === r.frequency)?.label || 'Miesięcznie'}
-                      {r.frequency !== 'monthly' && ` · ${formatCurrency(monthAmount)}/mies.`}
+                      {t.frequencies[r.frequency] || t.frequencies.monthly}
+                      {r.frequency !== 'monthly' && ` · ${formatCurrency(monthAmount)}${t.frequencies.perMonth}`}
                     </p>
                   </div>
                   <div className={styles.itemRight}>
@@ -136,13 +138,13 @@ export default function Recurring() {
                         style={{ color: r.active ? '#30d158' : '#636366' }}
                         onClick={() => toggleRecurring(r.id)}
                       >
-                        {r.active ? '● Aktywna' : '○ Wstrzym.'}
+                        {r.active ? t.recurring.active : t.recurring.paused}
                       </button>
                       <button
                         className={styles.deleteItemBtn}
                         onClick={() => deleteRecurring(r.id)}
                       >
-                        Usuń
+                        {t.common.delete}
                       </button>
                     </div>
                   </div>

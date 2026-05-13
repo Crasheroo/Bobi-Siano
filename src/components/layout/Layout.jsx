@@ -1,6 +1,7 @@
 import React from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import styles from './Layout.module.css'
+import { useTranslation } from '../../hooks/useTranslation.js'
 
 const AC = 'var(--accent-blue)'
 const IN = 'var(--tab-inactive)'
@@ -8,7 +9,7 @@ const IN = 'var(--tab-inactive)'
 const TABS = [
   {
     path: '/',
-    label: 'Przegląd',
+    labelKey: 'overview',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <rect x="3" y="3" width="8" height="8" rx="2" fill={active ? AC : 'none'} stroke={active ? AC : IN} strokeWidth="1.8"/>
@@ -20,7 +21,7 @@ const TABS = [
   },
   {
     path: '/expenses',
-    label: 'Wydatki',
+    labelKey: 'expenses',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M20 12V22H4V12" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -31,7 +32,7 @@ const TABS = [
   },
   {
     path: '/analytics',
-    label: 'Analiza',
+    labelKey: 'analytics',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -40,7 +41,7 @@ const TABS = [
   },
   {
     path: '/recurring',
-    label: 'Stałe',
+    labelKey: 'recurring',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <polyline points="17 1 21 5 17 9" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -52,7 +53,7 @@ const TABS = [
   },
   {
     path: '/goals',
-    label: 'Cele',
+    labelKey: 'goals',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" stroke={active ? AC : IN} strokeWidth="1.8"/>
@@ -73,6 +74,7 @@ const settingsIcon = (active) => (
 export default function Layout({ syncError }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const t = useTranslation()
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
@@ -101,7 +103,7 @@ export default function Layout({ syncError }) {
               >
                 <span className={styles.sidebarItemIcon}>{tab.icon(active)}</span>
                 <span className={styles.sidebarItemLabel} style={{ color: active ? AC : IN }}>
-                  {tab.label}
+                  {t.nav[tab.labelKey]}
                 </span>
               </button>
             )
@@ -115,7 +117,7 @@ export default function Layout({ syncError }) {
           >
             <span className={styles.sidebarItemIcon}>{settingsIcon(settingsActive)}</span>
             <span className={styles.sidebarItemLabel} style={{ color: settingsActive ? AC : IN }}>
-              Ustawienia
+              {t.nav.settings}
             </span>
           </button>
         </div>
@@ -126,7 +128,7 @@ export default function Layout({ syncError }) {
         {syncError && (
           <div className={styles.syncErrorBanner}>
             <span>⚠️</span>
-            <span>Błąd synchronizacji. Sprawdź połączenie.</span>
+            <span>{t.syncError}</span>
           </div>
         )}
         <div key={location.pathname} className="animate-fadeIn">
@@ -143,11 +145,11 @@ export default function Layout({ syncError }) {
               key={tab.path}
               className={`${styles.tabItem} ${active ? styles.tabItemActive : ''}`}
               onClick={() => navigate(tab.path)}
-              aria-label={tab.label}
+              aria-label={t.nav[tab.labelKey]}
             >
               <div className={styles.tabIcon}>{tab.icon(active)}</div>
               <span className={styles.tabLabel} style={{ color: active ? 'var(--accent-blue)' : 'var(--tab-inactive)' }}>
-                {tab.label}
+                {t.nav[tab.labelKey]}
               </span>
             </button>
           )

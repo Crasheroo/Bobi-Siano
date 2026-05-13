@@ -1,32 +1,26 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { formatCurrency, MONTH_NAMES } from '../utils/constants.js'
+import { formatCurrency } from '../utils/constants.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Goals.module.css'
 
 const GOAL_ICONS = ['🚗', '🏠', '✈️', '💻', '📱', '💍', '🎓', '🌴', '🎯', '💰', '🏋️', '🎸', '⛵', '🏕️', '🐶']
 const GOAL_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#ffd60a', '#64d2ff']
 
-function monthsToLabel(months) {
-  if (!isFinite(months) || months <= 0) return '—'
-  if (months < 1) return 'Ten miesiąc'
-  const m = Math.ceil(months)
-  if (m < 12) return `${m} mies.`
-  const y = Math.floor(m / 12)
-  const rem = m % 12
-  return rem === 0 ? `${y} lat${y === 1 ? 'o' : y < 5 ? 'a' : ''}` : `${y}l ${rem}mies.`
-}
-
-function completionDate(months) {
-  if (!isFinite(months) || months <= 0) return null
-  const d = new Date()
-  d.setMonth(d.getMonth() + Math.ceil(months))
-  return `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`
-}
-
 export default function Goals() {
   const navigate = useNavigate()
+  const t = useTranslation()
   const { goals, addGoal, deleteGoal, addToGoal, profile, expenses, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
+
+  const monthsToLabel = t.goals.monthsLabel
+
+  const completionDate = (months) => {
+    if (!isFinite(months) || months <= 0) return null
+    const d = new Date()
+    d.setMonth(d.getMonth() + Math.ceil(months))
+    return `${t.months[d.getMonth()]} ${d.getFullYear()}`
+  }
 
   const [showForm, setShowForm] = useState(false)
   const [depositGoalId, setDepositGoalId] = useState(null)
@@ -54,7 +48,7 @@ export default function Goals() {
     if (y > curYear || curMonth < 11) deadlineYearOptions.push(y)
   }
 
-  const deadlineMonthOptions = MONTH_NAMES
+  const deadlineMonthOptions = t.months
     .map((label, idx) => ({ label, idx }))
     .filter(({ idx }) => !deadlineYear || Number(deadlineYear) > curYear || idx > curMonth)
 
@@ -101,8 +95,8 @@ export default function Goals() {
   const thisMonthFree = Math.max(0, currentSalary - recurringTotal - thisMonthExpenses)
 
   const handleAdd = () => {
-    if (!name.trim()) { setError('Podaj nazwę celu'); return }
-    if (!targetAmount || isNaN(Number(targetAmount)) || Number(targetAmount) <= 0) { setError('Podaj kwotę docelową'); return }
+    if (!name.trim()) { setError(t.goals.errorName); return }
+    if (!targetAmount || isNaN(Number(targetAmount)) || Number(targetAmount) <= 0) { setError(t.goals.errorAmount); return }
     addGoal({
       name: name.trim(),
       targetAmount: Number(targetAmount),
@@ -125,12 +119,12 @@ export default function Goals() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <button className="back-home-btn" onClick={() => navigate('/')} aria-label="Pulpit">
+        <button className="back-home-btn" onClick={() => navigate('/')} aria-label={t.common.back}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className={styles.title}>Cele</h1>
+        <h1 className={styles.title}>{t.goals.title}</h1>
         <button className={styles.addBtn} onClick={() => setShowForm(!showForm)}>
           {showForm ? '✕' : '+'}
         </button>
@@ -140,28 +134,28 @@ export default function Goals() {
       <div className={styles.capacityCard}>
         <div className={styles.capRow}>
           <div className={styles.capItem}>
-            <p className={styles.capLabel}>Możesz odłożyć w tym mies.</p>
+            <p className={styles.capLabel}>{t.goals.canSaveThisMonth}</p>
             <p className={styles.capValue} style={{ color: thisMonthFree > 0 ? '#30d158' : '#ff453a' }}>
               {formatCurrency(thisMonthFree)}
             </p>
           </div>
           <div className={styles.capDivider} />
           <div className={styles.capItem}>
-            <p className={styles.capLabel}>Śred. zdolność / mies.</p>
+            <p className={styles.capLabel}>{t.goals.avgCapacity}</p>
             <p className={styles.capValue} style={{ color: monthlyCapacity > 0 ? '#0a84ff' : '#ff453a' }}>
               {formatCurrency(monthlyCapacity)}
             </p>
           </div>
         </div>
         <p className={styles.capNote}>
-          Na podstawie Twoich zarobków ({formatCurrency(currentSalary)}), stałych płatności ({formatCurrency(recurringTotal)}) i średnich wydatków z ostatnich 3 miesięcy.
+          {t.goals.capacityNote(formatCurrency(currentSalary), formatCurrency(recurringTotal), formatCurrency(Math.round(avgMonthlyExpenses)))}
         </p>
       </div>
 
       {/* Add form */}
       {showForm && (
         <div className={styles.form}>
-          <p className={styles.formTitle}>Nowy cel oszczędnościowy</p>
+          <p className={styles.formTitle}>{t.goals.newGoal}</p>
           {error && <p className={styles.error}>{error}</p>}
 
           <div className={styles.iconPicker}>
@@ -183,16 +177,16 @@ export default function Goals() {
             ))}
           </div>
 
-          <input className={styles.input} type="text" placeholder="Nazwa celu (np. Auto, Wakacje, Mieszkanie)" value={name} onChange={(e) => setName(e.target.value)} />
-          <input className={styles.input} type="number" inputMode="decimal" placeholder="Kwota docelowa (PLN)" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
-          <input className={styles.input} type="number" inputMode="decimal" placeholder="Już odłożone (opcjonalnie)" value={currentAmount} onChange={(e) => setCurrentAmount(e.target.value)} />
+          <input className={styles.input} type="text" placeholder={t.goals.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} />
+          <input className={styles.input} type="number" inputMode="decimal" placeholder={t.goals.targetAmount} value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
+          <input className={styles.input} type="number" inputMode="decimal" placeholder={t.goals.savedSoFar} value={currentAmount} onChange={(e) => setCurrentAmount(e.target.value)} />
           <div className={styles.deadlinePicker}>
             <select
               className={styles.deadlineSelect}
               value={deadlineMonthIdx}
               onChange={(e) => setDeadlineMonthIdx(e.target.value)}
             >
-              <option value="">Miesiąc</option>
+              <option value="">{t.goals.monthLabel}</option>
               {deadlineMonthOptions.map(({ label, idx }) => (
                 <option key={idx} value={idx}>{label}</option>
               ))}
@@ -202,7 +196,7 @@ export default function Goals() {
               value={deadlineYear}
               onChange={handleDeadlineYearChange}
             >
-              <option value="">Rok</option>
+              <option value="">{t.goals.yearLabel}</option>
               {deadlineYearOptions.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -217,13 +211,13 @@ export default function Goals() {
                 const diffMonths = (targetDate.getFullYear() - now.getFullYear()) * 12 + (targetDate.getMonth() - now.getMonth())
                 const needed = diffMonths > 0 ? (Number(targetAmount) - (Number(currentAmount) || 0)) / diffMonths : 0
                 return needed > 0
-                  ? `Aby zdążyć: ${formatCurrency(Math.ceil(needed))} / miesiąc`
-                  : 'Termin już minął lub jest w tym miesiącu'
+                  ? t.goals.deadlineHint(formatCurrency(Math.ceil(needed)))
+                  : t.goals.deadlinePast
               })()}
             </div>
           )}
 
-          <button className={styles.submitBtn} onClick={handleAdd}>Dodaj cel</button>
+          <button className={styles.submitBtn} onClick={handleAdd}>{t.goals.addGoal}</button>
         </div>
       )}
 
@@ -231,7 +225,7 @@ export default function Goals() {
       {goals.length === 0 ? (
         <div className={styles.empty}>
           <span>🎯</span>
-          <p>Brak celów. Dodaj swój pierwszy cel — samochód, wakacje, mieszkanie!</p>
+          <p>{t.goals.empty}</p>
         </div>
       ) : (
         <div className={styles.goalsList}>
@@ -271,23 +265,23 @@ export default function Goals() {
                 <div className={styles.progressTrack}>
                   <div className={styles.progressFill} style={{ width: `${pct}%`, background: done ? '#30d158' : goal.color }} />
                 </div>
-                <p className={styles.progressPct}>{pct.toFixed(0)}% osiągnięte</p>
+                <p className={styles.progressPct}>{pct.toFixed(0)}%</p>
 
                 {done ? (
-                  <div className={styles.goalDone}>Cel osiągnięty!</div>
+                  <div className={styles.goalDone}>{t.goals.goalDone}</div>
                 ) : (
                   <div className={styles.goalStats}>
                     <div className={styles.goalStat}>
-                      <p className={styles.goalStatLabel}>Brakuje</p>
+                      <p className={styles.goalStatLabel}>{t.goals.missing}</p>
                       <p className={styles.goalStatValue}>{formatCurrency(remaining)}</p>
                     </div>
                     <div className={styles.goalStat}>
-                      <p className={styles.goalStatLabel}>Przy śred. zdolności</p>
+                      <p className={styles.goalStatLabel}>{t.goals.atAvgCapacity}</p>
                       <p className={styles.goalStatValue}>{monthsToLabel(monthsNeeded)}</p>
                     </div>
                     {goal.deadline && (
                       <div className={styles.goalStat}>
-                        <p className={styles.goalStatLabel}>Potrzeba / mies.</p>
+                        <p className={styles.goalStatLabel}>{t.goals.neededPerMonth}</p>
                         <p className={styles.goalStatValue} style={{ color: monthlyNeeded > monthlyCapacity ? '#ff453a' : '#30d158' }}>
                           {monthlyNeeded > 0 ? formatCurrency(Math.ceil(monthlyNeeded)) : '—'}
                         </p>
@@ -304,7 +298,7 @@ export default function Goals() {
                   return (
                     <div className={styles.deadlineBadge} style={{ background: onTime ? 'rgba(48,209,88,0.12)' : 'rgba(255,68,58,0.12)', borderColor: onTime ? 'rgba(48,209,88,0.3)' : 'rgba(255,68,58,0.3)' }}>
                       <span style={{ color: onTime ? '#30d158' : '#ff453a' }}>
-                        {onTime ? `Na dobrej drodze · termin: ${MONTH_NAMES[m - 1]} ${y}` : `Potrzebujesz więcej niż możesz · ${MONTH_NAMES[m - 1]} ${y}`}
+                        {onTime ? `${t.goals.onTrack} ${t.months[m - 1]} ${y}` : `${t.goals.needMore} ${t.months[m - 1]} ${y}`}
                       </span>
                     </div>
                   )
@@ -317,17 +311,17 @@ export default function Goals() {
                         className={styles.depositInput}
                         type="number"
                         inputMode="decimal"
-                        placeholder="Kwota wpłaty"
+                        placeholder={t.common.amount}
                         value={depositAmount}
                         onChange={(e) => setDepositAmount(e.target.value)}
                         autoFocus
                       />
-                      <button className={styles.depositConfirm} onClick={() => handleDeposit(goal.id)}>Wpłać</button>
-                      <button className={styles.depositCancel} onClick={() => { setDepositGoalId(null); setDepositAmount('') }}>Anuluj</button>
+                      <button className={styles.depositConfirm} onClick={() => handleDeposit(goal.id)}>{t.goals.depositConfirm}</button>
+                      <button className={styles.depositCancel} onClick={() => { setDepositGoalId(null); setDepositAmount('') }}>{t.common.cancel}</button>
                     </div>
                   ) : (
                     <button className={styles.depositBtn} style={{ borderColor: goal.color, color: goal.color }} onClick={() => setDepositGoalId(goal.id)}>
-                      + Wpłać środki
+                      {t.goals.deposit}
                     </button>
                   )
                 )}
@@ -340,23 +334,23 @@ export default function Goals() {
       {/* Monthly report */}
       {goals.length > 0 && (
         <div className={styles.reportSection}>
-          <p className={styles.reportTitle}>Raport miesięczny</p>
+          <p className={styles.reportTitle}>{t.goals.reportTitle}</p>
           <div className={styles.reportCard}>
             <div className={styles.reportRow}>
-              <span className={styles.reportLabel}>Twoje zarobki</span>
+              <span className={styles.reportLabel}>{t.goals.yourEarnings}</span>
               <span className={styles.reportValue}>{formatCurrency(currentSalary)}</span>
             </div>
             <div className={styles.reportRow}>
-              <span className={styles.reportLabel}>Stałe płatności</span>
+              <span className={styles.reportLabel}>{t.goals.recurringPayments}</span>
               <span className={styles.reportValue} style={{ color: '#ff453a' }}>-{formatCurrency(recurringTotal)}</span>
             </div>
             <div className={styles.reportRow}>
-              <span className={styles.reportLabel}>Śred. wydatki (3 mies.)</span>
+              <span className={styles.reportLabel}>{t.goals.avgExpenses}</span>
               <span className={styles.reportValue} style={{ color: '#ff9f0a' }}>-{formatCurrency(Math.round(avgMonthlyExpenses))}</span>
             </div>
             <div className={styles.reportDivider} />
             <div className={styles.reportRow}>
-              <span className={styles.reportLabel}>Śred. zdolność oszczędzania</span>
+              <span className={styles.reportLabel}>{t.goals.avgSavingsCapacity}</span>
               <span className={styles.reportValue} style={{ color: monthlyCapacity > 0 ? '#30d158' : '#ff453a', fontWeight: 700 }}>
                 {formatCurrency(Math.round(monthlyCapacity))}
               </span>
@@ -364,7 +358,7 @@ export default function Goals() {
             {goals.filter((g) => g.currentAmount < g.targetAmount).length > 1 && (
               <>
                 <div className={styles.reportDivider} />
-                <p className={styles.reportSub}>Podział na cele (równy):</p>
+                <p className={styles.reportSub}>{t.goals.equalSplit}</p>
                 {goals
                   .filter((g) => g.currentAmount < g.targetAmount)
                   .map((g) => {

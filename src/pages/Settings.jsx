@@ -11,41 +11,31 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
 } from '../services/firebase.js'
+import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Settings.module.css'
 
 const CAT_ICONS = ['🏷️', '🐾', '🎁', '🎮', '💇', '🧴', '🧹', '🍕', '☕', '🎨', '🏊', '🚴', '🌿', '🧸', '👗', '💄', '🔧', '🎵', '⚽', '🐟']
 const CAT_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#ffd60a', '#64d2ff', '#98989e']
 
 const ACCENT_COLORS = [
-  { label: 'Niebieski', value: '#0a84ff' },
-  { label: 'Zielony', value: '#30d158' },
-  { label: 'Fioletowy', value: '#bf5af2' },
-  { label: 'Pomarańczowy', value: '#ff9f0a' },
-  { label: 'Różowy', value: '#ff375f' },
-  { label: 'Turkusowy', value: '#5ac8fa' },
-  { label: 'Indygo', value: '#5e5ce6' },
-  { label: 'Miętowy', value: '#34c759' },
+  { key: 'blue', value: '#0a84ff' },
+  { key: 'green', value: '#30d158' },
+  { key: 'purple', value: '#bf5af2' },
+  { key: 'orange', value: '#ff9f0a' },
+  { key: 'pink', value: '#ff375f' },
+  { key: 'teal', value: '#5ac8fa' },
+  { key: 'indigo', value: '#5e5ce6' },
+  { key: 'mint', value: '#34c759' },
 ]
-
-function getFirebaseError(code) {
-  switch (code) {
-    case 'auth/email-already-in-use': return 'Ten email jest już zarejestrowany'
-    case 'auth/invalid-email': return 'Nieprawidłowy adres email'
-    case 'auth/wrong-password':
-    case 'auth/invalid-credential': return 'Nieprawidłowy email lub hasło'
-    case 'auth/user-not-found': return 'Nie znaleziono konta z tym emailem'
-    case 'auth/weak-password': return 'Hasło musi mieć co najmniej 6 znaków'
-    case 'auth/too-many-requests': return 'Zbyt wiele prób. Spróbuj za chwilę'
-    default: return 'Wystąpił błąd. Spróbuj ponownie'
-  }
-}
 
 export default function Settings() {
   const navigate = useNavigate()
+  const t = useTranslation()
   const { settings, setSettings, profile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory } = useStore()
 
   const theme = settings?.theme || 'dark'
   const accent = settings?.accent || '#0a84ff'
+  const language = settings?.language || 'pl'
 
   const [showAddCat, setShowAddCat] = useState(false)
   const [newCatName, setNewCatName] = useState('')
@@ -55,9 +45,9 @@ export default function Settings() {
 
   const handleAddCategory = () => {
     const name = newCatName.trim()
-    if (!name) { setCatError('Podaj nazwę kategorii'); return }
+    if (!name) { setCatError(t.settings.categoryErrorEmpty); return }
     if ([...CATEGORIES, ...customCategories].some((c) => c.label.toLowerCase() === name.toLowerCase())) {
-      setCatError('Kategoria o tej nazwie już istnieje')
+      setCatError(t.settings.categoryErrorDuplicate)
       return
     }
     addCustomCategory({ label: name, icon: newCatIcon, color: newCatColor })
@@ -92,16 +82,16 @@ export default function Settings() {
   const handleEmailAuth = async () => {
     setAuthError('')
     if (!email.trim() || !password) {
-      setAuthError('Wypełnij wszystkie pola')
+      setAuthError(t.settings.authFormErrors.emptyFields)
       return
     }
     if (authAction === 'register') {
       if (password.length < 6) {
-        setAuthError('Hasło musi mieć co najmniej 6 znaków')
+        setAuthError(t.settings.authFormErrors.passwordTooShort)
         return
       }
       if (password !== confirm) {
-        setAuthError('Hasła się nie zgadzają')
+        setAuthError(t.settings.authFormErrors.passwordMismatch)
         return
       }
     }
@@ -113,14 +103,14 @@ export default function Settings() {
         await signInWithEmailAndPassword(auth, email.trim(), password)
       }
     } catch (e) {
-      setAuthError(getFirebaseError(e.code))
+      setAuthError(t.settings.authErrors[e.code] || t.settings.authErrors.default)
     }
     setAuthLoading(false)
   }
 
   const handlePasswordReset = async () => {
     if (!email.trim()) {
-      setAuthError('Wpisz adres email żeby zresetować hasło')
+      setAuthError(t.settings.authFormErrors.emptyFields)
       return
     }
     setAuthLoading(true)
@@ -129,7 +119,7 @@ export default function Settings() {
       setResetSent(true)
       setAuthError('')
     } catch (e) {
-      setAuthError(getFirebaseError(e.code))
+      setAuthError(t.settings.authErrors[e.code] || t.settings.authErrors.default)
     }
     setAuthLoading(false)
   }
@@ -150,18 +140,18 @@ export default function Settings() {
             <path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className={styles.title}>Ustawienia</h1>
+        <h1 className={styles.title}>{t.settings.title}</h1>
         <div style={{ width: 36 }} />
       </div>
 
       {/* Synchronizacja */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Konto i synchronizacja</p>
+        <p className={styles.sectionLabel}>{t.settings.accountSection}</p>
         <div className={styles.group}>
           {!isFirebaseConfigured ? (
             <div className={styles.row}>
               <p className={styles.rowValue} style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-                Firebase nie jest skonfigurowany. Uzupełnij plik .env.
+                {t.settings.firebaseNotConfigured}
               </p>
             </div>
           ) : user ? (
@@ -178,7 +168,7 @@ export default function Settings() {
               </div>
               <div className={styles.rowSeparator} />
               <button className={styles.signOutBtn} onClick={handleSignOut}>
-                Wyloguj się
+                {t.settings.signOut}
               </button>
             </>
           ) : (
@@ -188,13 +178,13 @@ export default function Settings() {
                   className={`${styles.authTab} ${authTab === 'google' ? styles.authTabActive : ''}`}
                   onClick={() => { setAuthTab('google'); clearForm() }}
                 >
-                  Google
+                  {t.settings.authTabGoogle}
                 </button>
                 <button
                   className={`${styles.authTab} ${authTab === 'email' ? styles.authTabActive : ''}`}
                   onClick={() => { setAuthTab('email'); clearForm() }}
                 >
-                  Email
+                  {t.settings.authTabEmail}
                 </button>
               </div>
 
@@ -206,7 +196,7 @@ export default function Settings() {
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
-                  Zaloguj się przez Google
+                  {t.settings.loginBtn} (Google)
                 </button>
               ) : (
                 <div className={styles.emailForm}>
@@ -215,20 +205,20 @@ export default function Settings() {
                       className={`${styles.actionBtn} ${authAction === 'login' ? styles.actionBtnActive : ''}`}
                       onClick={() => { setAuthAction('login'); setAuthError(''); setResetSent(false) }}
                     >
-                      Zaloguj się
+                      {t.settings.loginBtn}
                     </button>
                     <button
                       className={`${styles.actionBtn} ${authAction === 'register' ? styles.actionBtnActive : ''}`}
                       onClick={() => { setAuthAction('register'); setAuthError(''); setResetSent(false) }}
                     >
-                      Zarejestruj się
+                      {t.settings.registerBtn}
                     </button>
                   </div>
 
                   <input
                     className={styles.authInput}
                     type="email"
-                    placeholder="Adres email"
+                    placeholder={t.settings.emailPlaceholder}
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setAuthError('') }}
                     autoComplete="email"
@@ -236,7 +226,7 @@ export default function Settings() {
                   <input
                     className={styles.authInput}
                     type="password"
-                    placeholder="Hasło (min. 6 znaków)"
+                    placeholder={t.settings.passwordPlaceholder}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setAuthError('') }}
                     autoComplete={authAction === 'register' ? 'new-password' : 'current-password'}
@@ -246,7 +236,7 @@ export default function Settings() {
                     <input
                       className={styles.authInput}
                       type="password"
-                      placeholder="Powtórz hasło"
+                      placeholder={t.settings.confirmPasswordPlaceholder}
                       value={confirm}
                       onChange={(e) => { setConfirm(e.target.value); setAuthError('') }}
                       autoComplete="new-password"
@@ -255,19 +245,19 @@ export default function Settings() {
                   )}
 
                   {authError && <p className={styles.authError}>{authError}</p>}
-                  {resetSent && <p className={styles.authSuccess}>Link do resetu hasła wysłany na {email}</p>}
+                  {resetSent && <p className={styles.authSuccess}>{t.settings.resetSent(email)}</p>}
 
                   <button
                     className={styles.authSubmitBtn}
                     onClick={handleEmailAuth}
                     disabled={authLoading}
                   >
-                    {authLoading ? 'Ładowanie...' : authAction === 'register' ? 'Zarejestruj się' : 'Zaloguj się'}
+                    {authLoading ? t.common.loading : authAction === 'register' ? t.settings.registerBtn : t.settings.loginBtn}
                   </button>
 
                   {authAction === 'login' && (
                     <button className={styles.forgotBtn} onClick={handlePasswordReset} disabled={authLoading}>
-                      Zapomniałem hasła
+                      {t.settings.forgotPassword}
                     </button>
                   )}
                 </div>
@@ -276,19 +266,17 @@ export default function Settings() {
           )}
         </div>
         {isFirebaseConfigured && !user && (
-          <p className={styles.sectionNote}>
-            Logowanie synchronizuje Twoje dane między urządzeniami.
-          </p>
+          <p className={styles.sectionNote}>{t.settings.syncNote}</p>
         )}
       </div>
 
       {/* Motyw */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Wygląd</p>
+        <p className={styles.sectionLabel}>{t.settings.appearance}</p>
         <div className={styles.group}>
           <div className={styles.row}>
             <div className={styles.rowLeft}>
-              <p className={styles.rowTitle}>Motyw</p>
+              <p className={styles.rowTitle}>{t.settings.theme}</p>
             </div>
             <div className={styles.themeToggle}>
               <button
@@ -298,7 +286,7 @@ export default function Settings() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill={theme === 'dark' ? 'currentColor' : 'none'}/>
                 </svg>
-                Ciemny
+                {t.settings.dark}
               </button>
               <button
                 className={`${styles.themeBtn} ${theme === 'light' ? styles.themeBtnActive : ''}`}
@@ -315,7 +303,7 @@ export default function Settings() {
                   <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
-                Jasny
+                {t.settings.light}
               </button>
             </div>
           </div>
@@ -324,7 +312,7 @@ export default function Settings() {
 
       {/* Kolor akcentu */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Kolor akcentu</p>
+        <p className={styles.sectionLabel}>{t.settings.accentColor}</p>
         <div className={styles.group}>
           <div className={styles.accentGrid}>
             {ACCENT_COLORS.map((c) => (
@@ -332,7 +320,7 @@ export default function Settings() {
                 key={c.value}
                 className={styles.accentItem}
                 onClick={() => setSettings({ accent: c.value })}
-                aria-label={c.label}
+                aria-label={t.accentColors[c.key]}
               >
                 <div
                   className={`${styles.accentSwatch} ${accent === c.value ? styles.accentSwatchActive : ''}`}
@@ -344,21 +332,47 @@ export default function Settings() {
                     </svg>
                   )}
                 </div>
-                <span className={styles.accentLabel}>{c.label}</span>
+                <span className={styles.accentLabel}>{t.accentColors[c.key]}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
+      {/* Język */}
+      <div className={styles.section}>
+        <p className={styles.sectionLabel}>{t.settings.languageSection}</p>
+        <div className={styles.group}>
+          <div className={styles.row}>
+            <div className={styles.rowLeft}>
+              <p className={styles.rowTitle}>🌐 {t.settings.languageSection}</p>
+            </div>
+            <div className={styles.themeToggle}>
+              <button
+                className={`${styles.themeBtn} ${language === 'pl' ? styles.themeBtnActive : ''}`}
+                onClick={() => setSettings({ language: 'pl' })}
+              >
+                PL
+              </button>
+              <button
+                className={`${styles.themeBtn} ${language === 'en' ? styles.themeBtnActive : ''}`}
+                onClick={() => setSettings({ language: 'en' })}
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Własne kategorie */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Własne kategorie</p>
+        <p className={styles.sectionLabel}>{t.settings.customCategories}</p>
         <div className={styles.group}>
           {customCategories.length === 0 && !showAddCat && (
             <div className={styles.row}>
               <p className={styles.rowValue} style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-                Brak własnych kategorii
+                {t.settings.noCustomCategories}
               </p>
             </div>
           )}
@@ -403,7 +417,7 @@ export default function Settings() {
               <input
                 className={styles.authInput}
                 type="text"
-                placeholder="Nazwa kategorii"
+                placeholder={t.settings.categoryNamePlaceholder}
                 value={newCatName}
                 onChange={(e) => { setNewCatName(e.target.value); setCatError('') }}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
@@ -412,13 +426,13 @@ export default function Settings() {
               {catError && <p className={styles.authError}>{catError}</p>}
               <div className={styles.addCatActions}>
                 <button className={styles.authSubmitBtn} style={{ flex: 1 }} onClick={handleAddCategory}>
-                  Dodaj
+                  {t.common.add}
                 </button>
                 <button
                   className={styles.addCatCancelBtn}
                   onClick={() => { setShowAddCat(false); setNewCatName(''); setCatError('') }}
                 >
-                  Anuluj
+                  {t.common.cancel}
                 </button>
               </div>
             </div>
@@ -428,42 +442,40 @@ export default function Settings() {
             <>
               {customCategories.length > 0 && <div className={styles.rowSeparator} />}
               <button className={styles.addCatBtn} onClick={() => setShowAddCat(true)}>
-                + Dodaj kategorię
+                {t.settings.addCategory}
               </button>
             </>
           )}
         </div>
-        <p className={styles.sectionNote}>
-          Własne kategorie pojawiają się obok standardowych przy dodawaniu wydatków.
-        </p>
+        <p className={styles.sectionNote}>{t.settings.categoryNote}</p>
       </div>
 
       {/* Profil */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Profil</p>
+        <p className={styles.sectionLabel}>{t.settings.profileSection}</p>
         <div className={styles.group}>
           <div className={styles.row}>
-            <p className={styles.rowTitle}>Imię</p>
+            <p className={styles.rowTitle}>{t.settings.profileName}</p>
             <p className={styles.rowValue}>{profile.name || '—'}</p>
           </div>
           <div className={styles.rowSeparator} />
           <div className={styles.row}>
-            <p className={styles.rowTitle}>Domyślna wypłata</p>
+            <p className={styles.rowTitle}>{t.settings.defaultSalary}</p>
             <p className={styles.rowValue}>
               {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(profile.salary)}
             </p>
           </div>
         </div>
-        <p className={styles.sectionNote}>Domyślna wypłata używana gdy nie wpisano kwoty na dany miesiąc.</p>
+        <p className={styles.sectionNote}>{t.settings.salaryNote}</p>
       </div>
 
       {/* Prawne */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Informacje prawne</p>
+        <p className={styles.sectionLabel}>{t.settings.legal}</p>
         <div className={styles.group}>
           <Link to="/privacy" style={{ textDecoration: 'none' }}>
             <div className={styles.row}>
-              <p className={styles.rowTitle}>Polityka prywatności</p>
+              <p className={styles.rowTitle}>{t.settings.privacyPolicy}</p>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}>
                 <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -471,7 +483,7 @@ export default function Settings() {
           </Link>
         </div>
         <p className={styles.sectionNote} style={{ textAlign: 'center', paddingTop: 20, paddingBottom: 8 }}>
-          Lucent v1.0.0
+          {t.settings.version}
         </p>
       </div>
     </div>
