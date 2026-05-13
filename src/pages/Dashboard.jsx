@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency, formatDate } from '../utils/constants.js'
+import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { profile, expenses, recurring, goals, monthlySalaries, customCategories, getCurrentMonthExpenses, getMonthlyRecurringTotal, getSalaryForMonth, setMonthlySalary } = useStore()
   const t = useTranslation()
+  const formatAmount = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
@@ -76,7 +78,7 @@ export default function Dashboard() {
       <div className={styles.balanceCard}>
         <p className={styles.balanceLabel}>{t.dashboard.remaining}</p>
         <p className={styles.balanceAmount} style={{ color: remaining >= 0 ? '#30d158' : '#ff453a' }}>
-          {formatCurrency(remaining)}
+          {formatAmount(remaining)}
         </p>
         <div className={styles.progressBar}>
           <div
@@ -88,7 +90,7 @@ export default function Dashboard() {
           />
         </div>
         <div className={styles.balanceMeta}>
-          <span>{t.dashboard.spent}: {formatCurrency(totalSpent)}</span>
+          <span>{t.dashboard.spent}: {formatAmount(totalSpent)}</span>
           {editingSalary ? (
             <span className={styles.salaryEditRow}>
               <input
@@ -113,7 +115,7 @@ export default function Dashboard() {
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${formatCurrency(currentSalary)}` : t.dashboard.enterSalary}
+              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${formatAmount(currentSalary)}` : t.dashboard.enterSalary}
             </button>
           )}
         </div>
@@ -123,12 +125,12 @@ export default function Dashboard() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <p className={styles.statLabel}>{t.dashboard.recurringPayments}</p>
-          <p className={styles.statValue}>{formatCurrency(recurringTotal)}</p>
+          <p className={styles.statValue}>{formatAmount(recurringTotal)}</p>
           <p className={styles.statSub}>{t.dashboard.monthly}</p>
         </div>
         <div className={styles.statCard}>
           <p className={styles.statLabel}>{t.dashboard.expenses}</p>
-          <p className={styles.statValue}>{formatCurrency(expensesTotal)}</p>
+          <p className={styles.statValue}>{formatAmount(expensesTotal)}</p>
           <p className={styles.statSub}>{monthExpenses.length} {t.dashboard.transactions}</p>
         </div>
         <div className={styles.statCard} style={{ borderColor: savingsRate >= 20 ? 'rgba(48,209,88,0.3)' : 'rgba(255,68,58,0.3)' }}>
@@ -157,7 +159,7 @@ export default function Dashboard() {
             <div className={styles.goalWidgetInfo}>
               <p className={styles.goalWidgetName}>{topGoal.name}</p>
               <p className={styles.goalWidgetAmounts}>
-                {formatCurrency(topGoal.currentAmount)} / {formatCurrency(topGoal.targetAmount)}
+                {formatAmount(topGoal.currentAmount)} / {formatAmount(topGoal.targetAmount)}
               </p>
             </div>
             <div className={styles.goalWidgetRight}>
@@ -170,7 +172,7 @@ export default function Dashboard() {
           </div>
           {remaining > 0 && (
             <p className={styles.goalWidgetCapacity}>
-              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{formatCurrency(remaining)}</strong>
+              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{formatAmount(remaining)}</strong>
             </p>
           )}
         </div>
@@ -207,7 +209,7 @@ export default function Dashboard() {
                     <p className={styles.expenseName}>{e.description || cat.label}</p>
                     <p className={styles.expenseDate}>{formatDate(e.date)}</p>
                   </div>
-                  <p className={styles.expenseAmount}>-{formatCurrency(e.amount)}</p>
+                  <p className={styles.expenseAmount}>-{formatAmount(e.amount)}</p>
                 </div>
               )
             })}

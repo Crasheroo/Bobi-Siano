@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import useStore from '../store/useStore.js'
-import { CATEGORIES } from '../utils/constants.js'
+import { CATEGORIES, CURRENCIES } from '../utils/constants.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import {
   auth,
   googleProvider,
@@ -36,6 +37,8 @@ export default function Settings() {
   const theme = settings?.theme || 'dark'
   const accent = settings?.accent || '#0a84ff'
   const language = settings?.language || 'pl'
+  const currency = settings?.currency || 'PLN'
+  const formatAmount = useFormatCurrency()
 
   const [showAddCat, setShowAddCat] = useState(false)
   const [newCatName, setNewCatName] = useState('')
@@ -365,6 +368,26 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Waluta */}
+      <div className={styles.section}>
+        <p className={styles.sectionLabel}>{t.settings.currencySection}</p>
+        <div className={styles.group}>
+          <div className={styles.currencyGrid}>
+            {CURRENCIES.map((c) => (
+              <button
+                key={c.code}
+                className={`${styles.currencyBtn} ${currency === c.code ? styles.currencyBtnActive : ''}`}
+                style={currency === c.code ? { borderColor: accent, background: accent + '22', color: accent } : {}}
+                onClick={() => setSettings({ currency: c.code })}
+              >
+                <span className={styles.currencyCode}>{c.code}</span>
+                <span className={styles.currencySymbol}>{c.symbol}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Własne kategorie */}
       <div className={styles.section}>
         <p className={styles.sectionLabel}>{t.settings.customCategories}</p>
@@ -462,7 +485,7 @@ export default function Settings() {
           <div className={styles.row}>
             <p className={styles.rowTitle}>{t.settings.defaultSalary}</p>
             <p className={styles.rowValue}>
-              {new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(profile.salary)}
+              {formatAmount(profile.salary)}
             </p>
           </div>
         </div>

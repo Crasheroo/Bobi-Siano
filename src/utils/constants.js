@@ -21,11 +21,22 @@ export const RECURRING_FREQUENCIES = [
 
 export const CURRENCY = 'PLN'
 
+export const CURRENCIES = [
+  { code: 'PLN', symbol: 'zł',  locale: 'pl-PL' },
+  { code: 'EUR', symbol: '€',   locale: 'de-DE' },
+  { code: 'USD', symbol: '$',   locale: 'en-US' },
+  { code: 'GBP', symbol: '£',   locale: 'en-GB' },
+  { code: 'CHF', symbol: 'CHF', locale: 'de-CH' },
+  { code: 'CZK', symbol: 'Kč',  locale: 'cs-CZ' },
+  { code: 'SEK', symbol: 'kr',  locale: 'sv-SE' },
+  { code: 'NOK', symbol: 'kr',  locale: 'nb-NO' },
+]
+
 export const getCategoryById = (id) =>
   CATEGORIES.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
-export const formatCurrency = (amount, currency = 'PLN') => {
-  return new Intl.NumberFormat('pl-PL', {
+export const formatCurrency = (amount, currency = 'PLN', locale = 'pl-PL') => {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,

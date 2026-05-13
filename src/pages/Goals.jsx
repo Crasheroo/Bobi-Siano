@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { formatCurrency } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import styles from './Goals.module.css'
 
 const GOAL_ICONS = ['🚗', '🏠', '✈️', '💻', '📱', '💍', '🎓', '🌴', '🎯', '💰', '🏋️', '🎸', '⛵', '🏕️', '🐶']
@@ -11,6 +11,7 @@ const GOAL_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5a
 export default function Goals() {
   const navigate = useNavigate()
   const t = useTranslation()
+  const formatAmount = useFormatCurrency()
   const { goals, addGoal, deleteGoal, addToGoal, profile, expenses, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
 
   const monthsToLabel = t.goals.monthsLabel
@@ -136,19 +137,19 @@ export default function Goals() {
           <div className={styles.capItem}>
             <p className={styles.capLabel}>{t.goals.canSaveThisMonth}</p>
             <p className={styles.capValue} style={{ color: thisMonthFree > 0 ? '#30d158' : '#ff453a' }}>
-              {formatCurrency(thisMonthFree)}
+              {formatAmount(thisMonthFree)}
             </p>
           </div>
           <div className={styles.capDivider} />
           <div className={styles.capItem}>
             <p className={styles.capLabel}>{t.goals.avgCapacity}</p>
             <p className={styles.capValue} style={{ color: monthlyCapacity > 0 ? '#0a84ff' : '#ff453a' }}>
-              {formatCurrency(monthlyCapacity)}
+              {formatAmount(monthlyCapacity)}
             </p>
           </div>
         </div>
         <p className={styles.capNote}>
-          {t.goals.capacityNote(formatCurrency(currentSalary), formatCurrency(recurringTotal), formatCurrency(Math.round(avgMonthlyExpenses)))}
+          {t.goals.capacityNote(formatAmount(currentSalary), formatAmount(recurringTotal), formatAmount(Math.round(avgMonthlyExpenses)))}
         </p>
       </div>
 
@@ -211,7 +212,7 @@ export default function Goals() {
                 const diffMonths = (targetDate.getFullYear() - now.getFullYear()) * 12 + (targetDate.getMonth() - now.getMonth())
                 const needed = diffMonths > 0 ? (Number(targetAmount) - (Number(currentAmount) || 0)) / diffMonths : 0
                 return needed > 0
-                  ? t.goals.deadlineHint(formatCurrency(Math.ceil(needed)))
+                  ? t.goals.deadlineHint(formatAmount(Math.ceil(needed)))
                   : t.goals.deadlinePast
               })()}
             </div>
@@ -254,9 +255,9 @@ export default function Goals() {
                   <div className={styles.goalInfo}>
                     <p className={styles.goalName}>{goal.name}</p>
                     <p className={styles.goalAmounts}>
-                      <span style={{ color: goal.color }}>{formatCurrency(goal.currentAmount)}</span>
+                      <span style={{ color: goal.color }}>{formatAmount(goal.currentAmount)}</span>
                       <span className={styles.goalSep}> / </span>
-                      <span>{formatCurrency(goal.targetAmount)}</span>
+                      <span>{formatAmount(goal.targetAmount)}</span>
                     </p>
                   </div>
                   <button className={styles.deleteGoalBtn} onClick={() => deleteGoal(goal.id)}>✕</button>
@@ -273,7 +274,7 @@ export default function Goals() {
                   <div className={styles.goalStats}>
                     <div className={styles.goalStat}>
                       <p className={styles.goalStatLabel}>{t.goals.missing}</p>
-                      <p className={styles.goalStatValue}>{formatCurrency(remaining)}</p>
+                      <p className={styles.goalStatValue}>{formatAmount(remaining)}</p>
                     </div>
                     <div className={styles.goalStat}>
                       <p className={styles.goalStatLabel}>{t.goals.atAvgCapacity}</p>
@@ -283,7 +284,7 @@ export default function Goals() {
                       <div className={styles.goalStat}>
                         <p className={styles.goalStatLabel}>{t.goals.neededPerMonth}</p>
                         <p className={styles.goalStatValue} style={{ color: monthlyNeeded > monthlyCapacity ? '#ff453a' : '#30d158' }}>
-                          {monthlyNeeded > 0 ? formatCurrency(Math.ceil(monthlyNeeded)) : '—'}
+                          {monthlyNeeded > 0 ? formatAmount(Math.ceil(monthlyNeeded)) : '—'}
                         </p>
                       </div>
                     )}
@@ -338,21 +339,21 @@ export default function Goals() {
           <div className={styles.reportCard}>
             <div className={styles.reportRow}>
               <span className={styles.reportLabel}>{t.goals.yourEarnings}</span>
-              <span className={styles.reportValue}>{formatCurrency(currentSalary)}</span>
+              <span className={styles.reportValue}>{formatAmount(currentSalary)}</span>
             </div>
             <div className={styles.reportRow}>
               <span className={styles.reportLabel}>{t.goals.recurringPayments}</span>
-              <span className={styles.reportValue} style={{ color: '#ff453a' }}>-{formatCurrency(recurringTotal)}</span>
+              <span className={styles.reportValue} style={{ color: '#ff453a' }}>-{formatAmount(recurringTotal)}</span>
             </div>
             <div className={styles.reportRow}>
               <span className={styles.reportLabel}>{t.goals.avgExpenses}</span>
-              <span className={styles.reportValue} style={{ color: '#ff9f0a' }}>-{formatCurrency(Math.round(avgMonthlyExpenses))}</span>
+              <span className={styles.reportValue} style={{ color: '#ff9f0a' }}>-{formatAmount(Math.round(avgMonthlyExpenses))}</span>
             </div>
             <div className={styles.reportDivider} />
             <div className={styles.reportRow}>
               <span className={styles.reportLabel}>{t.goals.avgSavingsCapacity}</span>
               <span className={styles.reportValue} style={{ color: monthlyCapacity > 0 ? '#30d158' : '#ff453a', fontWeight: 700 }}>
-                {formatCurrency(Math.round(monthlyCapacity))}
+                {formatAmount(Math.round(monthlyCapacity))}
               </span>
             </div>
             {goals.filter((g) => g.currentAmount < g.targetAmount).length > 1 && (
@@ -367,7 +368,7 @@ export default function Goals() {
                     return (
                       <div key={g.id} className={styles.reportRow}>
                         <span className={styles.reportLabel}>{g.icon} {g.name}</span>
-                        <span className={styles.reportValue}>{formatCurrency(Math.round(share))} · {monthsToLabel(months)}</span>
+                        <span className={styles.reportValue}>{formatAmount(Math.round(share))} · {monthsToLabel(months)}</span>
                       </div>
                     )
                   })}

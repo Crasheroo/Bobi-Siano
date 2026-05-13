@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency, formatDate } from '../utils/constants.js'
+import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import styles from './Expenses.module.css'
 
 export default function Expenses() {
   const navigate = useNavigate()
   const t = useTranslation()
+  const formatAmount = useFormatCurrency()
   const { expenses, deleteExpense, editExpense, customCategories } = useStore()
   const allCategories = [...CATEGORIES, ...customCategories]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
@@ -126,7 +128,7 @@ export default function Expenses() {
       {filtered.length > 0 && (
         <div className={styles.summary}>
           <p className={styles.summaryText}>
-            {t.expenses.transactionsSum(filtered.length)} <strong>{formatCurrency(totalFiltered)}</strong>
+            {t.expenses.transactionsSum(filtered.length)} <strong>{formatAmount(totalFiltered)}</strong>
           </p>
         </div>
       )}
@@ -158,7 +160,7 @@ export default function Expenses() {
                         <p className={styles.expenseCatLabel}>{cat.label}</p>
                       </div>
                       <div className={styles.expenseRight}>
-                        <p className={styles.expenseAmount}>-{formatCurrency(e.amount)}</p>
+                        <p className={styles.expenseAmount}>-{formatAmount(e.amount)}</p>
                         {swipedId === e.id && (
                           <>
                             <button

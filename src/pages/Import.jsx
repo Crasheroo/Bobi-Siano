@@ -1,13 +1,15 @@
 import React, { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency, formatDate } from '../utils/constants.js'
+import { CATEGORIES, formatDate } from '../utils/constants.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { parseBank, readFileAsText } from '../services/bankParser.js'
 import styles from './Import.module.css'
 
 export default function Import() {
   const navigate = useNavigate()
   const { addExpense, customCategories } = useStore()
+  const formatAmount = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const fileRef = useRef(null)
 
@@ -258,7 +260,7 @@ export default function Import() {
 
                 <div className={styles.txRight}>
                   <p className={styles.txAmount} style={{ color: tx.isExpense ? '#ff453a' : '#30d158' }}>
-                    {tx.isExpense ? '-' : '+'}{formatCurrency(tx.amount)}
+                    {tx.isExpense ? '-' : '+'}{formatAmount(tx.amount)}
                   </p>
                   <select
                     className={styles.catSelect}

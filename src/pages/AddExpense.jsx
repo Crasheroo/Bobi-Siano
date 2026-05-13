@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES } from '../utils/constants.js'
+import { CATEGORIES, CURRENCIES } from '../utils/constants.js'
 import { scanReceipt } from '../services/ocr.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './AddExpense.module.css'
@@ -9,7 +9,9 @@ import styles from './AddExpense.module.css'
 export default function AddExpense() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { addExpense, customCategories } = useStore()
+  const { addExpense, customCategories, settings } = useStore()
+  const currencyCode = settings?.currency || 'PLN'
+  const currencySymbol = CURRENCIES.find((c) => c.code === currencyCode)?.symbol || 'zł'
   const fileRef = useRef(null)
   const allCategories = [...CATEGORIES, ...customCategories]
 
@@ -135,7 +137,7 @@ export default function AddExpense() {
       <div className={styles.form}>
         {/* Amount */}
         <div className={styles.amountWrap}>
-          <span className={styles.amountPrefix}>PLN</span>
+          <span className={styles.amountPrefix}>{currencySymbol}</span>
           <input
             className={styles.amountInput}
             type="number"

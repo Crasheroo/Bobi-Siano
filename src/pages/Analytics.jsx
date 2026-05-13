@@ -5,8 +5,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Area, AreaChart
 } from 'recharts'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatCurrency } from '../utils/constants.js'
+import { CATEGORIES } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import styles from './Analytics.module.css'
 
 const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#5e5ce6', '#34c759', '#ffd60a', '#64d2ff', '#98989e']
@@ -14,6 +15,7 @@ const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5
 export default function Analytics() {
   const navigate = useNavigate()
   const t = useTranslation()
+  const formatAmount = useFormatCurrency()
   const { expenses, customCategories, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const [activeTab, setActiveTab] = useState('categories')
@@ -76,7 +78,7 @@ export default function Analytics() {
     return (
       <div className={styles.tooltip}>
         <p className={styles.tooltipLabel}>{payload[0].name || payload[0].dataKey}</p>
-        <p className={styles.tooltipValue}>{formatCurrency(payload[0].value)}</p>
+        <p className={styles.tooltipValue}>{formatAmount(payload[0].value)}</p>
       </div>
     )
   }
@@ -107,9 +109,9 @@ export default function Analytics() {
           </p>
         </div>
         <div className={styles.scoreRight}>
-          <p className={styles.scoreDetail}>{t.analytics.earnings} <strong>{formatCurrency(currentSalary)}</strong></p>
-          <p className={styles.scoreDetail}>{t.analytics.spent} <strong style={{ color: '#ff453a' }}>{formatCurrency(totalSpent)}</strong></p>
-          <p className={styles.scoreDetail}>{t.analytics.left} <strong style={{ color: saved >= 0 ? '#30d158' : '#ff453a' }}>{formatCurrency(saved)}</strong></p>
+          <p className={styles.scoreDetail}>{t.analytics.earnings} <strong>{formatAmount(currentSalary)}</strong></p>
+          <p className={styles.scoreDetail}>{t.analytics.spent} <strong style={{ color: '#ff453a' }}>{formatAmount(totalSpent)}</strong></p>
+          <p className={styles.scoreDetail}>{t.analytics.left} <strong style={{ color: saved >= 0 ? '#30d158' : '#ff453a' }}>{formatAmount(saved)}</strong></p>
         </div>
       </div>
 
@@ -153,7 +155,7 @@ export default function Analytics() {
                     <div className={styles.legendDot} style={{ background: cat.color }} />
                     <span className={styles.legendIcon}>{cat.icon}</span>
                     <span className={styles.legendName}>{cat.name}</span>
-                    <span className={styles.legendValue}>{formatCurrency(cat.value)}</span>
+                    <span className={styles.legendValue}>{formatAmount(cat.value)}</span>
                     <span className={styles.legendPct}>
                       {expensesTotal > 0 ? ((cat.value / expensesTotal) * 100).toFixed(0) : 0}%
                     </span>
@@ -204,7 +206,7 @@ export default function Analytics() {
               <div key={i} className={styles.budgetRow}>
                 <div className={styles.budgetDot} style={{ background: item.color }} />
                 <span className={styles.budgetName}>{item.name}</span>
-                <span className={styles.budgetVal}>{formatCurrency(item.value)}</span>
+                <span className={styles.budgetVal}>{formatAmount(item.value)}</span>
                 <span className={styles.budgetPct}>
                   {currentSalary > 0 ? ((item.value / currentSalary) * 100).toFixed(0) : 0}%
                 </span>

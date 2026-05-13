@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { formatCurrency } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
+import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import styles from './Recurring.module.css'
 
 const RECURRING_ICONS = [
@@ -12,6 +12,7 @@ const RECURRING_ICONS = [
 export default function Recurring() {
   const navigate = useNavigate()
   const t = useTranslation()
+  const formatAmount = useFormatCurrency()
   const { recurring, addRecurring, deleteRecurring, toggleRecurring, getMonthlyRecurringTotal } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -48,12 +49,12 @@ export default function Recurring() {
       <div className={styles.summaryCard}>
         <div className={styles.sumItem}>
           <p className={styles.sumLabel}>{t.recurring.monthly}</p>
-          <p className={styles.sumValue}>{formatCurrency(monthlyTotal)}</p>
+          <p className={styles.sumValue}>{formatAmount(monthlyTotal)}</p>
         </div>
         <div className={styles.sumDivider} />
         <div className={styles.sumItem}>
           <p className={styles.sumLabel}>{t.recurring.yearly}</p>
-          <p className={styles.sumValue}>{formatCurrency(yearlyTotal)}</p>
+          <p className={styles.sumValue}>{formatAmount(yearlyTotal)}</p>
         </div>
       </div>
 
@@ -127,11 +128,11 @@ export default function Recurring() {
                     <p className={styles.itemName}>{r.name}</p>
                     <p className={styles.itemFreq}>
                       {t.frequencies[r.frequency] || t.frequencies.monthly}
-                      {r.frequency !== 'monthly' && ` · ${formatCurrency(monthAmount)}${t.frequencies.perMonth}`}
+                      {r.frequency !== 'monthly' && ` · ${formatAmount(monthAmount)}${t.frequencies.perMonth}`}
                     </p>
                   </div>
                   <div className={styles.itemRight}>
-                    <p className={styles.itemAmount}>{formatCurrency(r.amount)}</p>
+                    <p className={styles.itemAmount}>{formatAmount(r.amount)}</p>
                     <div className={styles.itemActions}>
                       <button
                         className={styles.toggleBtn}

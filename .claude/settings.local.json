@@ -11,7 +11,8 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\" -Recurse -Filter \"*.jsx\" -o Name)",
       "Bash(Select-Object -First 30)",
       "Bash(ls \"c:\\\\Users\\\\pawez\\\\.claude\\\\projects\\\\c--Users-pawez-OneDrive-Desktop-Projekty-Bobi-Siano\\\\memory\\\\\" 2>/dev/null || echo \"DIR_MISSING\")",
-      "Read(//c/Users/pawez/.claude/projects/c--Users-pawez-OneDrive-Desktop-Projekty-Bobi-Siano/memory\" 2>/dev/**)"
+      "Read(//c/Users/pawez/.claude/projects/c--Users-pawez-OneDrive-Desktop-Projekty-Bobi-Siano/memory\" 2>/dev/**)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\" -Force)"
     ]
   }
 }
