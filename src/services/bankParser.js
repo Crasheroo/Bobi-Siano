@@ -88,8 +88,8 @@ function parseSmartCSV(lines) {
   const SEPARATORS = [';', ',', '\t']
 
   for (const sep of SEPARATORS) {
-    // Scan first 25 lines to find where tabular data begins
-    for (let hi = 0; hi < Math.min(lines.length - 3, 25); hi++) {
+    // Scan first 50 lines to find where tabular data begins (some banks have long metadata headers)
+    for (let hi = 0; hi < Math.min(lines.length - 3, 50); hi++) {
       const rawHeader = splitLine(lines[hi], sep)
       if (rawHeader.length < 2) continue
 
@@ -112,10 +112,20 @@ function parseSmartCSV(lines) {
       })
 
       const iDate = colTypes.indexOf('date')
-      // Prefer the LAST amount column — in many bank exports the final column is net amount
+      // Prefer the amount column with the most negative values — that's the transaction amount,
+      // not a running balance (which is always positive and appears last in many bank exports)
       let iAmt = -1
-      for (let ci = colTypes.length - 1; ci >= 0; ci--) {
-        if (colTypes[ci] === 'amount' && ci !== iDate) { iAmt = ci; break }
+      let maxNeg = -1
+      for (let ci = 0; ci < colTypes.length; ci++) {
+        if (colTypes[ci] !== 'amount' || ci === iDate) continue
+        const neg = dataRows.filter(r => { const a = parseAmount(clean(r[ci] || '')); return a !== null && a < 0 }).length
+        if (neg > maxNeg) { maxNeg = neg; iAmt = ci }
+      }
+      // No negatives found (income-only export) — fall back to first amount column
+      if (iAmt === -1) {
+        for (let ci = 0; ci < colTypes.length; ci++) {
+          if (colTypes[ci] === 'amount' && ci !== iDate) { iAmt = ci; break }
+        }
       }
       if (iDate === -1 || iAmt === -1) continue
 
@@ -156,7 +166,7 @@ function parseSmartCSV(lines) {
 }
 
 // ── mBank-specific parser (uses bank's own categories) ────────
-// Kept because mBank provides better category data than keyword guessing
+// Detects column positions from header labels — handles all mBank export variants
 const PL_MAP = { ą:'a',ć:'c',ę:'e',ł:'l',ń:'n',ó:'o',ś:'s',ź:'z',ż:'z',Ą:'a',Ć:'c',Ę:'e',Ł:'l',Ń:'n',Ó:'o',Ś:'s',Ź:'z',Ż:'z' }
 const normPl = (s) => s.toLowerCase().replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, c => PL_MAP[c] || c)
 
@@ -186,15 +196,25 @@ const MBANK_CAT_MAP = {
 function parseMbank(lines) {
   const hi = lines.findIndex((l) => l.includes('#Data operacji'))
   if (hi === -1) return null
+
+  // Detect column positions from header labels — robust against format variants
+  const headerCols = splitLine(lines[hi], ';').map(clean)
+  const iDate = headerCols.findIndex(h => h.includes('Data operacji'))
+  const iDesc = headerCols.findIndex(h => h.includes('Opis operacji'))
+  const iCat  = headerCols.findIndex(h => h.includes('Kategoria'))
+  const iAmt  = headerCols.findIndex(h => h.includes('Kwota'))
+
+  if (iDate === -1 || iAmt === -1) return null
+
   const result = []
   for (let i = hi + 1; i < lines.length; i++) {
     const cols = splitLine(lines[i], ';')
-    if (cols.length < 5) continue
-    const dateStr = clean(cols[0])
+    if (cols.length <= Math.max(iDate, iAmt)) continue
+    const dateStr = clean(cols[iDate])
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue
-    const rawDesc = clean(cols[1])
-    const bankCat = clean(cols[3])
-    const amount  = parseAmount(clean(cols[4]))
+    const rawDesc = iDesc >= 0 ? clean(cols[iDesc] || '') : ''
+    const bankCat = iCat >= 0 ? clean(cols[iCat] || '') : ''
+    const amount  = parseAmount(clean(cols[iAmt] || ''))
     if (amount === null || amount === 0) continue
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) continue

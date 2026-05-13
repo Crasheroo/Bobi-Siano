@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  height: -webkit-fill-available;
   width: 100%;
   overflow: hidden;
   background: var(--bg-primary);
@@ -14,8 +13,10 @@
   overflow-x: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* bottom padding keeps last item visible above the tab bar */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
 }
 
 .syncErrorBanner {

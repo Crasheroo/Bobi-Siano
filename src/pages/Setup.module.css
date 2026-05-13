@@ -3,8 +3,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100svh;
-  padding: 48px 32px;
+  min-height: 100dvh;
+  padding: calc(env(safe-area-inset-top) + 32px) 32px calc(env(safe-area-inset-bottom) + 32px);
   background: var(--bg-primary);
   position: relative;
   overflow: hidden;
