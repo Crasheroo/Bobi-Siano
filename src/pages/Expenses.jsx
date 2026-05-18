@@ -59,7 +59,7 @@ export default function Expenses() {
       if (!groups[key]) groups[key] = { label: formatDate(e.date), items: [] }
       groups[key].items.push(e)
     })
-    return Object.values(groups)
+    return Object.values(groups).sort((a, b) => new Date(b.items[0].date) - new Date(a.items[0].date))
   }, [filtered])
 
   const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0)
