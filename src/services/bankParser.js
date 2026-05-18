@@ -1,16 +1,16 @@
 // ── Category guessing by merchant keywords ────────────────────
 const KEYWORDS = {
   food:          ['biedronka','lidl','kaufland','zabka','auchan','carrefour','tesco','netto','stokrotka','spar','delikatesy','piotr i pawel','intermarche','spozywczy','lewiatan','polomarket','freshmarket','aldi','rewe','edeka','albert','albert heijn','ica','coop','migros','denner','penny','hofer','billa','mercadona','dia ','leclerc'],
-  restaurants:   ['mcdonald','kfc','burger king','subway','pizza','restauracja','bar mleczny','kebab','sushi','dominos','kawiarnia','cafe ','coffee','starbucks','costa','pyszne','deliveroo','uber eats','just eat','wolt','glovo','restaurant','bistro'],
-  transport:     ['uber','bolt','pkp','mzk','mpk','ztm','paliwo','orlen','shell','circle k','lotos','bp ','parking','autostrada','e-toll','flixbus','wizzair','ryanair','easyjet','lot ','lufthansa','klm','db bahn','renfe','sncf','trenitalia','ns ','obb'],
-  entertainment: ['cinema','multikino','helios','steam','epic games','playstation','xbox','nintendo','bilety','teatr','muzeum','escape room','totalcasino','casino','spotify','netflix','hbo','disney','prime video','apple tv','crunchyroll'],
-  subscriptions: ['netflix','spotify','hbo','disney','apple','google play','youtube premium','tidal','deezer','microsoft','adobe','canva','chatgpt','openai','notion','dropbox','icloud','lastpass','nordvpn'],
-  shopping:      ['allegro','amazon','zalando','empik','media markt','rtv euro agd','ikea','leroy merlin','castorama','jysk','h&m','zara','reserved','aliexpress','ebay','shein','asos','aboutyou','otto ','fnac'],
-  health:        ['apteka','pharmacy','apotheke','rossmann','hebe','drogeria','leki','dr max','medicover','luxmed','szpital','hospital','klinika','dentysta','dentist','optyk','dm ','boots '],
-  utilities:     ['tauron','pge ','enea','energa','innogy','czynsz','woda','gaz','pgnig','edf ','engie','vattenfall','strom','stade'],
+  restaurants:   ['mcdonald','kfc','burger king','subway','pizza','restauracja','bar mleczny','kebab','sushi','dominos','kawiarnia','cafe ','coffee','starbucks','costa','pyszne','deliveroo','uber eats','just eat','wolt','glovo','restaurant','bistro','slodki kacik','goraco polecam'],
+  transport:     ['uber','bolt','pkp','mzk','mpk','ztm','paliwo','orlen','shell','circle k','lotos','bp ','parking','autostrada','e-toll','flixbus','wizzair','ryanair','easyjet','lot ','lufthansa','klm','db bahn','renfe','sncf','trenitalia','ns ','obb','jakdojade','mol sf'],
+  entertainment: ['cinema','multikino','helios','steam','epic games','playstation','xbox','nintendo','bilety','teatr','muzeum','escape room','totalcasino','casino','hellcase','csgo','skinport','skinbaron','buff.163','waxpeer','spotify','netflix','hbo','disney','prime video','apple tv','crunchyroll'],
+  subscriptions: ['netflix','spotify','hbo','disney','apple.com','apple music','google play','youtube premium','tidal','deezer','microsoft','adobe','canva','chatgpt','openai','notion','dropbox','icloud','lastpass','nordvpn','nju mobile'],
+  shopping:      ['allegro','amazon','zalando','empik','media markt','rtv euro agd','ikea','leroy merlin','castorama','jysk','h&m','zara','reserved','aliexpress','ebay','shein','asos','aboutyou','otto ','fnac','whsmith'],
+  health:        ['apteka','pharmacy','apotheke','rossmann','hebe','drogeria','leki','dr max','medicover','luxmed','szpital','hospital','klinika','dentysta','dentist','optyk','dm ','boots ','barber'],
+  utilities:     ['tauron','pge ','enea','energa','innogy','czynsz','woda','gaz','pgnig','edf ','engie','vattenfall','strom','stade','orange polska','play online'],
   fitness:       ['silownia','gym','fitness','zdrofit','calypso','multisport','cityfit','mcfit','basic-fit','holmes place','anytime fitness'],
   education:     ['uczelnia','szkola','udemy','coursera','linkedin learning','skillshare','duolingo'],
-  travel:        ['hotel','booking','airbnb','wizzair','ryanair','lotnisko','airport','marriott','hilton','ibis','novotel','accor'],
+  travel:        ['hotel','booking','airbnb','lotnisko','airport','marriott','hilton','ibis','novotel','accor'],
 }
 
 function guessCategory(text) {
@@ -193,6 +193,13 @@ const MBANK_CAT_MAP = {
   'prezenty i wsparcie':        'other',
 }
 
+// mBank categories that represent internal account movements, not real spending
+const INTERNAL_MBANK_CATS = new Set([
+  'regularne oszczedzanie',
+  'przelew wlasny',
+  'lokaty i konto oszcz.',
+])
+
 function parseMbank(lines) {
   const hi = lines.findIndex((l) => l.includes('#Data operacji'))
   if (hi === -1) return null
@@ -219,9 +226,15 @@ function parseMbank(lines) {
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) continue
     const desc = extractMerchantName(rawDesc) || bankCat || 'Import'
-    const category = bankCat
-      ? (MBANK_CAT_MAP[normPl(bankCat.trim())] || guessCategory(rawDesc))
-      : guessCategory(rawDesc)
+    const normCat = normPl(bankCat.trim())
+    const isInternal = INTERNAL_MBANK_CATS.has(normCat)
+
+    // Keyword match on merchant name takes priority — overrides mBank's category when
+    // the bank miscategorises a transaction (e.g. AliExpress → "Żywność", TotalCasino → "Podróże")
+    const keywordCat = guessCategory(desc + ' ' + rawDesc)
+    const mbankCat   = MBANK_CAT_MAP[normCat]
+    const category   = keywordCat !== 'other' ? keywordCat : (mbankCat || 'other')
+
     result.push({
       date: date.toISOString(),
       description: desc,
@@ -229,6 +242,7 @@ function parseMbank(lines) {
       rawAmount: amount,
       category,
       isExpense: amount < 0,
+      isInternal,
     })
   }
   return result.length > 0 ? result : null

@@ -40,7 +40,8 @@ export default function Import() {
       }
       const sel = {}, catMap = {}
       parsed.forEach((tx, i) => {
-        sel[i] = tx.isExpense
+        // Auto-deselect internal transfers (savings goals, own-account moves)
+        sel[i] = tx.isExpense && !tx.isInternal
         catMap[i] = tx.category
       })
       setTransactions(parsed)
@@ -64,8 +65,9 @@ export default function Import() {
     return transactions
       .map((tx, i) => ({ ...tx, _i: i }))
       .filter((tx) => {
-        if (filterMode === 'expenses') return tx.isExpense
-        if (filterMode === 'income') return !tx.isExpense
+        if (filterMode === 'expenses') return tx.isExpense && !tx.isInternal
+        if (filterMode === 'income')   return !tx.isExpense
+        if (filterMode === 'internal') return tx.isInternal
         return true
       })
   }, [transactions, filterMode])
@@ -208,8 +210,9 @@ export default function Import() {
   }
 
   // ── Preview screen ───────────────────────────────────────────
-  const expenseCount = transactions.filter((tx) => tx.isExpense).length
-  const incomeCount  = transactions.length - expenseCount
+  const expenseCount  = transactions.filter((tx) => tx.isExpense && !tx.isInternal).length
+  const incomeCount   = transactions.filter((tx) => !tx.isExpense).length
+  const internalCount = transactions.filter((tx) => tx.isInternal).length
 
   return (
     <div className={styles.page}>
@@ -231,6 +234,7 @@ export default function Import() {
         {[
           { id: 'expenses', label: t.import.tabExpenses(expenseCount) },
           { id: 'income',   label: t.import.tabIncome(incomeCount) },
+          ...(internalCount > 0 ? [{ id: 'internal', label: t.import.tabInternal(internalCount) }] : []),
           { id: 'all',      label: t.import.tabAll(transactions.length) },
         ].map((f) => (
           <button
