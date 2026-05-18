@@ -33,7 +33,7 @@ const ACCENT_COLORS = [
 export default function Settings() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { settings, setSettings, profile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory } = useStore()
+  const { settings, setSettings, profile, setProfile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory } = useStore()
 
   const theme = settings?.theme || 'dark'
   const accent = settings?.accent || '#0a84ff'
@@ -488,6 +488,22 @@ export default function Settings() {
             <p className={styles.rowValue}>
               {formatAmount(profile.salary)}
             </p>
+          </div>
+          <div className={styles.rowSeparator} />
+          <div className={styles.row}>
+            <div className={styles.rowLeft}>
+              <p className={styles.rowTitle}>{t.settings.salaryDay}</p>
+              <p className={styles.rowSub} style={{ fontSize: 11, marginTop: 2 }}>{t.settings.salaryDayNote}</p>
+            </div>
+            <select
+              className={styles.salaryDaySelect}
+              value={profile.salaryDay ?? 1}
+              onChange={e => setProfile({ salaryDay: parseInt(e.target.value) })}
+            >
+              {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                <option key={d} value={d}>{d}.</option>
+              ))}
+            </select>
           </div>
         </div>
         <p className={styles.sectionNote}>{t.settings.salaryNote}</p>

@@ -1,0 +1,388 @@
+.page {
+  min-height: 100%;
+  background: var(--bg-primary);
+  padding-bottom: 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 16px 16px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* ── Range pills ──────────────────────────────────────────── */
+.rangePills {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rangePills::-webkit-scrollbar { display: none; }
+
+.pill {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--separator);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pillActive {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+}
+
+.customRange {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.dateInput {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  min-width: 0;
+}
+
+.dateSep {
+  color: var(--text-tertiary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.empty span { font-size: 40px; margin-bottom: 8px; }
+.emptySub { font-size: 13px; color: var(--text-tertiary); text-align: center; }
+
+/* ── Overview card ────────────────────────────────────────── */
+.overviewCard {
+  margin: 0 16px 16px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-xl);
+  border: 0.5px solid var(--separator);
+}
+
+.overviewMain { margin-bottom: 16px; }
+
+.overviewLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.overviewValue {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.overviewSub {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.statItem {
+  background: var(--bg-tertiary, rgba(255,255,255,0.04));
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 3px;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+/* ── Insights ─────────────────────────────────────────────── */
+.insightsSection {
+  padding: 0 16px 8px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.insightCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 0.5px solid var(--separator);
+  border-left: 3px solid var(--accent-blue);
+  margin-bottom: 8px;
+}
+
+.insightIcon { font-size: 20px; flex-shrink: 0; line-height: 1.2; }
+
+.insightContent { flex: 1; min-width: 0; }
+
+.insightTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.insightDetail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 9px 4px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--separator);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tabActive {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+.tabContent { padding: 12px 16px 0; }
+
+/* ── Category rows ────────────────────────────────────────── */
+.catRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+.catRow:last-child { border-bottom: none; }
+
+.catIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.catInfo { flex: 1; min-width: 0; }
+
+.catHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.catName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.catAmount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.catBarTrack {
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.catBar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.catPct {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ── Monthly table ────────────────────────────────────────── */
+.monthTable { margin-top: 12px; }
+
+.monthRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+.monthRow:last-child { border-bottom: none; }
+
+.monthRowAvg { opacity: 0.6; }
+
+.monthLabel {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.monthCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  min-width: 40px;
+}
+
+.monthAmount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 90px;
+}
+
+.monthDiff {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  min-width: 40px;
+}
+
+/* ── Merchant rows ────────────────────────────────────────── */
+.merchantRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+.merchantRow:last-child { border-bottom: none; }
+
+.merchantRank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  min-width: 28px;
+}
+
+.merchantInfo { flex: 1; min-width: 0; }
+
+.merchantName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.merchantCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.merchantRight { text-align: right; flex-shrink: 0; }
+
+.merchantAmount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.merchantPct {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* ── Tooltip ──────────────────────────────────────────────── */
+.tooltip {
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--separator);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}

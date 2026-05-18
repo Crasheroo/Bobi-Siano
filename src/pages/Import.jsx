@@ -24,6 +24,7 @@ export default function Import() {
   const [filterMode, setFilterMode] = useState('expenses')
   const [importedCount, setImportedCount] = useState(0)
   const [skippedCount, setSkippedCount] = useState(0)
+  const [importedRange, setImportedRange] = useState(null)
 
   const handleFile = async (file) => {
     if (!file) return
@@ -86,6 +87,7 @@ export default function Import() {
 
   const handleImport = () => {
     let count = 0, skipped = 0
+    const importedDates = []
     transactions.forEach((tx, i) => {
       if (!selected[i]) return
       if (isDuplicate(tx)) { skipped++; return }
@@ -95,8 +97,15 @@ export default function Import() {
         category: cats[i] || tx.category,
         date: tx.date,
       })
+      importedDates.push(new Date(tx.date))
       count++
     })
+    if (importedDates.length > 0) {
+      importedDates.sort((a, b) => a - b)
+      const from = importedDates[0].toISOString().slice(0, 10)
+      const to   = importedDates[importedDates.length - 1].toISOString().slice(0, 10)
+      setImportedRange({ from, to })
+    }
     setImportedCount(count)
     setSkippedCount(skipped)
     setStep('success')
@@ -177,11 +186,19 @@ export default function Import() {
               {t.import.duplicateSkipped(skippedCount)}
             </p>
           )}
-          <button className={styles.successBtn} onClick={() => navigate('/expenses')}>
+          {importedRange && (
+            <button
+              className={styles.successBtn}
+              onClick={() => navigate(`/statement-analysis?from=${importedRange.from}&to=${importedRange.to}`)}
+            >
+              {t.import.analyzeBtn}
+            </button>
+          )}
+          <button className={importedRange ? styles.successBtnSecondary : styles.successBtn} onClick={() => navigate('/expenses')}>
             {t.import.seeExpenses}
           </button>
           <button className={styles.successBtnSecondary} onClick={() => {
-            setStep('upload'); setTransactions([]); setSelected({}); setError('')
+            setStep('upload'); setTransactions([]); setSelected({}); setError(''); setImportedRange(null)
           }}>
             {t.import.importAnother}
           </button>

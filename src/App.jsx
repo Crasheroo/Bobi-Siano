@@ -17,6 +17,7 @@ const Goals = lazy(() => import('./pages/Goals.jsx'))
 const Settings = lazy(() => import('./pages/Settings.jsx'))
 const Privacy = lazy(() => import('./pages/Privacy.jsx'))
 const Import = lazy(() => import('./pages/Import.jsx'))
+const StatementAnalysis = lazy(() => import('./pages/StatementAnalysis.jsx'))
 
 function PageLoader() {
   return (
@@ -137,6 +138,7 @@ export default function App() {
               <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
               <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><Privacy /></Suspense>} />
               <Route path="/import" element={<Suspense fallback={<PageLoader />}><Import /></Suspense>} />
+              <Route path="/statement-analysis" element={<Suspense fallback={<PageLoader />}><StatementAnalysis /></Suspense>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           )}

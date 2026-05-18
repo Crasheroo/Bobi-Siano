@@ -8,6 +8,7 @@ import useStore from '../store/useStore.js'
 import { CATEGORIES } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
+import { getPayPeriod, formatPeriodLabel } from '../utils/payPeriod.js'
 import styles from './Analytics.module.css'
 
 const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#5e5ce6', '#34c759', '#ffd60a', '#64d2ff', '#98989e']
@@ -16,17 +17,20 @@ export default function Analytics() {
   const navigate = useNavigate()
   const t = useTranslation()
   const formatAmount = useFormatCurrency()
-  const { expenses, customCategories, getMonthlyRecurringTotal, getSalaryForMonth } = useStore()
+  const { expenses, customCategories, getMonthlyRecurringTotal, getSalaryForMonth, profile } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const [activeTab, setActiveTab] = useState('categories')
   const now = new Date()
 
+  const salaryDay = profile?.salaryDay ?? 1
+  const payPeriod = getPayPeriod(now, salaryDay)
+
   const monthExpenses = useMemo(() => {
     return expenses.filter((e) => {
       const d = new Date(e.date)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      return d >= payPeriod.start && d <= payPeriod.end
     })
-  }, [expenses])
+  }, [expenses, payPeriod.start.getTime(), payPeriod.end.getTime()])
 
   const categoryData = useMemo(() => {
     const map = {}
@@ -93,7 +97,9 @@ export default function Analytics() {
         </button>
         <div>
           <h1 className={styles.title}>{t.analytics.title}</h1>
-          <p className={styles.subtitle}>{t.months[now.getMonth()]} {now.getFullYear()}</p>
+          <p className={styles.subtitle}>
+            {salaryDay > 1 ? formatPeriodLabel(payPeriod.start, payPeriod.end) : `${t.months[now.getMonth()]} ${now.getFullYear()}`}
+          </p>
         </div>
       </div>
 

@@ -500,3 +500,15 @@
   transition: background 0.15s;
 }
 .addCatCancelBtn:active { background: var(--bg-quaternary); }
+
+.salaryDaySelect {
+  background: var(--bg-tertiary);
+  border: 0.5px solid var(--separator);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+}

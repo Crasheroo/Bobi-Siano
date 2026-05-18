@@ -10,6 +10,7 @@ const useStore = create(
         salary: 0,
         currency: 'PLN',
         setupDone: false,
+        salaryDay: 1,
       },
       setProfile: (data) =>
         set((s) => ({ profile: { ...s.profile, ...data } })),
@@ -135,7 +136,7 @@ const useStore = create(
 
       // === RESET ===
       resetStore: () => set({
-        profile: { name: '', salary: 0, currency: 'PLN', setupDone: false },
+        profile: { name: '', salary: 0, currency: 'PLN', setupDone: false, salaryDay: 1 },
         expenses: [],
         incomes: [],
         recurring: [],
