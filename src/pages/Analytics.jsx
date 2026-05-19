@@ -20,7 +20,7 @@ export default function Analytics() {
   const formatAmount = useFormatCurrency()
   const { expenses, customCategories, goals, getMonthlyRecurringTotal, getSalaryForMonth, profile } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
-  const [activeTab, setActiveTab] = useState('categories')
+  const [activeTab, setActiveTab] = useState('advice')
   const now = new Date()
 
   const salaryDay = profile?.salaryDay ?? 1
@@ -139,10 +139,9 @@ export default function Analytics() {
       {/* Tabs */}
       <div className={styles.tabs}>
         {[
+          { id: 'advice',     label: 'Porady' },
           { id: 'categories', label: t.analytics.tabCategories },
-          { id: 'trend', label: t.analytics.tabTrend },
-          { id: 'budget', label: t.analytics.tabBudget },
-          { id: 'advice', label: 'Porady' },
+          { id: 'trend',      label: t.analytics.tabTrend },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -317,59 +316,6 @@ export default function Analytics() {
         </div>
       )}
 
-      {activeTab === 'budget' && (
-        <div className={styles.chartSection}>
-          <p className={styles.chartTitle}>{t.analytics.budgetTitle}</p>
-
-          {currentSalary === 0 ? (
-            <div className={styles.empty}><span>💰</span><p>Ustaw wypłatę na dashboardzie aby zobaczyć rozkład budżetu</p></div>
-          ) : (
-            <>
-              {/* Stacked bar */}
-              <div className={styles.stackedBar}>
-                {budgetData.map((item) => {
-                  const pct = currentSalary > 0 ? (item.value / currentSalary) * 100 : 0
-                  return pct > 0 ? (
-                    <div
-                      key={item.name}
-                      className={styles.stackedSegment}
-                      style={{ width: `${Math.min(pct, 100)}%`, background: item.color }}
-                      title={`${item.name}: ${formatAmount(item.value)}`}
-                    />
-                  ) : null
-                })}
-              </div>
-
-              {/* Breakdown rows */}
-              <div className={styles.budgetBreakdown}>
-                {budgetData.map((item) => {
-                  const pct = currentSalary > 0 ? (item.value / currentSalary) * 100 : 0
-                  return (
-                    <div key={item.name} className={styles.budgetRow}>
-                      <div className={styles.budgetDot} style={{ background: item.color }} />
-                      <span className={styles.budgetName}>{item.name}</span>
-                      <div className={styles.budgetBarWrap}>
-                        <div
-                          className={styles.budgetBar}
-                          style={{ width: `${Math.min(pct, 100)}%`, background: item.color + 'aa' }}
-                        />
-                      </div>
-                      <span className={styles.budgetVal}>{formatAmount(item.value)}</span>
-                      <span className={styles.budgetPct}>{pct.toFixed(0)}%</span>
-                    </div>
-                  )
-                })}
-                {currentSalary > 0 && (
-                  <div className={styles.budgetTotal}>
-                    <span>Budżet miesięczny</span>
-                    <span>{formatAmount(currentSalary)}</span>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   )
 }
