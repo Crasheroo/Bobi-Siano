@@ -66,7 +66,8 @@ async function callGemini(items, apiKey) {
   )
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err?.error?.message || `HTTP ${res.status}`)
+    const msg = err?.error?.message || err?.error?.status || `HTTP ${res.status}`
+    throw new Error(msg)
   }
   const data = await res.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
@@ -96,18 +97,13 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
     const chunk = toProcess.slice(offset, offset + CHUNK)
     const items = chunk.map(({ tx }, ci) => ({ id: ci, desc: tx.description }))
 
-    try {
-      const parsed = await callGemini(items, apiKey)
-      parsed.forEach(r => {
-        if (r.id >= 0 && r.id < chunk.length) {
-          const cat = normalizeCat(r.cat || r.category || r.kategoria || '')
-          result[chunk[r.id].i] = cat
-        }
-      })
-    } catch (e) {
-      console.warn('AI categorization chunk failed:', e.message)
-      // continue with remaining chunks even if one fails
-    }
+    const parsed = await callGemini(items, apiKey)
+    parsed.forEach(r => {
+      if (r.id >= 0 && r.id < chunk.length) {
+        const cat = normalizeCat(r.cat || r.category || r.kategoria || '')
+        result[chunk[r.id].i] = cat
+      }
+    })
   }
 
   return result
