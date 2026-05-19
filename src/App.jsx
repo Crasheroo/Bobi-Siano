@@ -62,7 +62,10 @@ export default function App() {
     const handleSession = async (session) => {
       if (!session?.user) {
         clearTimeout(syncTimerRef.current)
-        useStore.getState().resetStore()
+        // Only wipe data on explicit logout — not when simply not logged in
+        if (useStore.getState().user) {
+          useStore.getState().resetStore()
+        }
         return
       }
 
