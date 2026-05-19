@@ -9,6 +9,7 @@ import { CATEGORIES } from '../utils/constants.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { generateInsights } from '../services/insightsEngine.js'
+import { generateSavingsAdvice } from '../services/savingsAdvisor.js'
 import styles from './StatementAnalysis.module.css'
 
 const SEVERITY_COLOR = {
@@ -38,7 +39,7 @@ export default function StatementAnalysis() {
   const [searchParams] = useSearchParams()
   const t = useTranslation()
   const formatAmount = useFormatCurrency()
-  const { expenses, customCategories, profile, getSalaryForMonth, getMonthlyRecurringTotal } = useStore()
+  const { expenses, customCategories, profile, goals, getSalaryForMonth, getMonthlyRecurringTotal } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
 
   const fromParam = searchParams.get('from')
@@ -116,6 +117,12 @@ export default function StatementAnalysis() {
   const insights = useMemo(() =>
     generateInsights(filtered, salary, allCategories, formatAmount),
     [filtered, salary, allCategories, formatAmount]
+  )
+
+  // ── Savings advice (uses ALL expenses, not filtered) ──────────
+  const savingsAdvice = useMemo(() =>
+    generateSavingsAdvice({ expenses, salary, goals: goals || [], recurringTotal: recurringAmt }),
+    [expenses, salary, goals, recurringAmt]
   )
 
   const maxMonthAmt = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.amount)) : 0
@@ -237,6 +244,7 @@ export default function StatementAnalysis() {
               { id: 'categories', label: 'Kategorie' },
               { id: 'monthly',    label: 'Miesiące' },
               { id: 'merchants',  label: 'Miejsca' },
+              { id: 'advice',     label: '💡 Porady' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -333,6 +341,122 @@ export default function StatementAnalysis() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* ── Advice tab ─────────────────────────────────── */}
+          {activeTab === 'advice' && (
+            <div className={styles.tabContent}>
+              {!savingsAdvice ? (
+                <div className={styles.adviceEmpty}>
+                  <span>📊</span>
+                  <p>Potrzebujesz przynajmniej 1 pełny miesiąc danych</p>
+                  <p className={styles.adviceEmptySub}>Zaimportuj wyciąg bankowy obejmujący poprzedni miesiąc</p>
+                </div>
+              ) : (
+                <>
+                  {/* Summary banner */}
+                  <div className={styles.adviceSummary}>
+                    <div>
+                      <p className={styles.adviceSummaryLabel}>Możesz zaoszczędzić</p>
+                      <p className={styles.adviceSummaryAmount}>{formatAmount(savingsAdvice.totalPotentialMonthly)}<span className={styles.adviceSummaryUnit}>/mies.</span></p>
+                      <p className={styles.adviceSummaryYear}>to {formatAmount(savingsAdvice.totalPotentialAnnual)} rocznie</p>
+                    </div>
+                    <div className={styles.adviceSummaryRight}>
+                      <p className={styles.adviceSummaryMeta}>na podstawie</p>
+                      <p className={styles.adviceSummaryMonths}>{savingsAdvice.monthCount} {savingsAdvice.monthCount === 1 ? 'miesiąca' : 'miesięcy'}</p>
+                      <p className={styles.adviceSummaryMeta}>danych</p>
+                    </div>
+                  </div>
+
+                  {/* Recommendation cards */}
+                  {savingsAdvice.recommendations.length === 0 ? (
+                    <div className={styles.adviceAllGood}>
+                      <span>✅</span>
+                      <p>Twoje wydatki są w normie we wszystkich kategoriach!</p>
+                    </div>
+                  ) : (
+                    savingsAdvice.recommendations.map((rec) => {
+                      const cat = allCategories.find(c => c.id === rec.catId)
+                      if (!cat) return null
+                      const statusColor = rec.overBenchmark ? '#ff453a' : '#ff9f0a'
+                      return (
+                        <div key={rec.catId} className={styles.adviceCard} style={{ borderLeftColor: statusColor }}>
+                          <div className={styles.adviceCardHeader}>
+                            <div className={styles.adviceCardIcon} style={{ background: cat.color + '22' }}>
+                              {cat.icon}
+                            </div>
+                            <div className={styles.adviceCardMeta}>
+                              <span className={styles.adviceCardName}>{cat.label}</span>
+                              <span className={styles.adviceCardAmount}>{formatAmount(rec.median)}/mies.</span>
+                            </div>
+                            <span
+                              className={styles.adviceBadge}
+                              style={{ background: statusColor + '22', color: statusColor }}
+                            >
+                              {(rec.pctOfSalary * 100).toFixed(0)}% wypłaty
+                            </span>
+                          </div>
+
+                          {rec.overBenchmark && (
+                            <p className={styles.adviceOverLimit}>
+                              ⚠ Wydajesz {formatAmount(rec.median - rec.benchmarkAmt)} powyżej rekomendowanego limitu ({formatAmount(rec.benchmarkAmt)}/mies.)
+                            </p>
+                          )}
+
+                          <div className={styles.adviceSavingsRow}>
+                            <span className={styles.adviceSavingsArrow}>→</span>
+                            <span className={styles.adviceSavingsText}>
+                              Potencjalna oszczędność:{' '}
+                              <strong>{formatAmount(rec.savingsMonthly)}/mies.</strong>
+                              {' '}·{' '}
+                              <strong>{formatAmount(rec.savingsAnnual)}/rok</strong>
+                            </span>
+                          </div>
+
+                          {rec.tips.length > 0 && (
+                            <ul className={styles.adviceTips}>
+                              {rec.tips.map((tip, i) => (
+                                <li key={i}>{tip}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
+
+                  {/* Goal acceleration */}
+                  {savingsAdvice.goalSims.length > 0 && (
+                    <div className={styles.adviceGoalsSection}>
+                      <p className={styles.sectionTitle}>Przyspieszenie celów</p>
+                      {savingsAdvice.goalSims.map(g => (
+                        <div key={g.id} className={styles.adviceGoalRow}>
+                          <p className={styles.adviceGoalName}>{g.name}</p>
+                          <div className={styles.adviceGoalTimes}>
+                            <div className={styles.adviceGoalTime}>
+                              <span className={styles.adviceGoalTimeVal} style={{ color: 'var(--text-tertiary)' }}>
+                                {g.monthsNow != null ? `${g.monthsNow} mies.` : '—'}
+                              </span>
+                              <span className={styles.adviceGoalTimeLabel}>teraz</span>
+                            </div>
+                            <span className={styles.adviceGoalArrow}>→</span>
+                            <div className={styles.adviceGoalTime}>
+                              <span className={styles.adviceGoalTimeVal} style={{ color: '#30d158' }}>
+                                {g.monthsOpt != null ? `${g.monthsOpt} mies.` : '—'}
+                              </span>
+                              <span className={styles.adviceGoalTimeLabel}>po optymalizacji</span>
+                            </div>
+                            {g.monthsSaved != null && g.monthsSaved > 0 && (
+                              <span className={styles.adviceGoalSaved}>−{g.monthsSaved} mies.</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </>

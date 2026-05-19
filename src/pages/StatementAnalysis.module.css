@@ -376,6 +376,257 @@
   margin-top: 1px;
 }
 
+/* ── Advice tab ───────────────────────────────────────────── */
+.adviceEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+.adviceEmpty span { font-size: 36px; margin-bottom: 4px; }
+.adviceEmptySub { font-size: 12px; color: var(--text-tertiary); }
+
+.adviceSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.12), rgba(10, 132, 255, 0.1));
+  border: 0.5px solid rgba(48, 209, 88, 0.3);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.adviceSummaryLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.adviceSummaryAmount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #30d158;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+
+.adviceSummaryUnit {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.adviceSummaryYear {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.adviceSummaryRight {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.adviceSummaryMeta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.adviceSummaryMonths {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+}
+
+.adviceAllGood {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.adviceAllGood span { font-size: 36px; }
+
+.adviceCard {
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  border: 0.5px solid var(--separator);
+  border-left: 3px solid #ff453a;
+  padding: 14px 14px 12px;
+  margin-bottom: 10px;
+}
+
+.adviceCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.adviceCardIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.adviceCardMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.adviceCardName {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adviceCardAmount {
+  display: block;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.adviceBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.adviceOverLimit {
+  font-size: 12px;
+  color: #ff9f0a;
+  background: rgba(255, 159, 10, 0.08);
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.adviceSavingsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.adviceSavingsArrow {
+  font-size: 14px;
+  color: #30d158;
+  flex-shrink: 0;
+}
+
+.adviceSavingsText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.adviceTips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 0.5px solid var(--separator);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.adviceTips li {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.4;
+}
+
+.adviceTips li::before {
+  content: '·';
+  position: absolute;
+  left: 3px;
+  color: var(--text-tertiary);
+}
+
+.adviceGoalsSection {
+  margin-top: 16px;
+}
+
+.adviceGoalRow {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 0.5px solid var(--separator);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.adviceGoalName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.adviceGoalTimes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adviceGoalTime {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.adviceGoalTimeVal {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.adviceGoalTimeLabel {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.adviceGoalArrow {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.adviceGoalSaved {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: #30d158;
+  background: rgba(48, 209, 88, 0.12);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
 /* ── Tooltip ──────────────────────────────────────────────── */
 .tooltip {
   background: var(--bg-secondary);
