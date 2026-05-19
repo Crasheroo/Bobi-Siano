@@ -4,13 +4,16 @@ import useStore from '../store/useStore.js'
 import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
+import { getPayPeriod } from '../utils/payPeriod.js'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { profile, expenses, recurring, goals, monthlySalaries, customCategories, getCurrentMonthExpenses, getMonthlyRecurringTotal, getSalaryForMonth, setMonthlySalary } = useStore()
+  const { profile, expenses, recurring, goals, monthlySalaries, customCategories,
+          categoryBudgets, getCurrentMonthExpenses, getMonthlyRecurringTotal,
+          getSalaryForMonth, setMonthlySalary } = useStore()
   const t = useTranslation()
-  const formatAmount = useFormatCurrency()
+  const fmt = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
@@ -19,37 +22,75 @@ export default function Dashboard() {
 
   const now = new Date()
   const monthName = t.months[now.getMonth()]
+  const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
   const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
   const salarySetThisMonth = (monthlySalaries || []).some(
     (ms) => ms.year === now.getFullYear() && ms.month === now.getMonth()
   )
 
-  const monthExpenses = getCurrentMonthExpenses()
+  // Use pay period expenses (respects salary day)
+  const monthExpenses = useMemo(() => {
+    return expenses.filter(e => {
+      const d = new Date(e.date)
+      return d >= payPeriod.start && d <= payPeriod.end
+    })
+  }, [expenses, payPeriod.start, payPeriod.end])
+
   const recurringTotal = getMonthlyRecurringTotal()
-  const expensesTotal = monthExpenses.reduce((s, e) => s + e.amount, 0)
-  const totalSpent = expensesTotal + recurringTotal
-  const remaining = currentSalary - totalSpent
-  const savingsRate = currentSalary > 0 ? ((remaining / currentSalary) * 100) : 0
-  const spentPercent = currentSalary > 0 ? Math.min((totalSpent / currentSalary) * 100, 100) : 0
+  const expensesTotal  = monthExpenses.reduce((s, e) => s + e.amount, 0)
+  const totalSpent     = expensesTotal + recurringTotal
+  const remaining      = currentSalary - totalSpent
+  const savingsRate    = currentSalary > 0 ? ((remaining / currentSalary) * 100) : 0
+  const spentPercent   = currentSalary > 0 ? Math.min((totalSpent / currentSalary) * 100, 100) : 0
+
+  // ── Month-end spending forecast ──────────────────────────────────────
+  const forecast = useMemo(() => {
+    const dayOfMonth  = now.getDate()
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    if (dayOfMonth < 5 || monthExpenses.length === 0) return null
+
+    // Use calendar-month expenses for the forecast (not pay period)
+    const calMonthExpenses = expenses.filter(e => {
+      const d = new Date(e.date)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    const calTotal = calMonthExpenses.reduce((s, e) => s + e.amount, 0)
+    const dailyAvg = calTotal / dayOfMonth
+    const projected = Math.round(dailyAvg * daysInMonth)
+    const diff = projected - currentSalary
+    return { projected, diff, dailyAvg }
+  }, [expenses, now, currentSalary, monthExpenses.length])
+
+  // ── Budget widget: categories near/over limit ────────────────────────
+  const budgetAlerts = useMemo(() => {
+    const catSpending = {}
+    monthExpenses.forEach(e => {
+      catSpending[e.category] = (catSpending[e.category] || 0) + e.amount
+    })
+    return Object.entries(categoryBudgets)
+      .map(([catId, limit]) => {
+        const cat   = allCategories.find(c => c.id === catId)
+        const spent = catSpending[catId] || 0
+        const pct   = limit > 0 ? (spent / limit) * 100 : 0
+        return { catId, cat, spent, limit, pct }
+      })
+      .filter(b => b.pct >= 70 && b.cat)
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 3)
+  }, [monthExpenses, categoryBudgets, allCategories])
 
   const handleSalarySave = () => {
     const val = Number(salaryInput)
-    if (!isNaN(val) && val >= 0) {
-      setMonthlySalary(now.getFullYear(), now.getMonth(), val)
-    }
+    if (!isNaN(val) && val >= 0) setMonthlySalary(now.getFullYear(), now.getMonth(), val)
     setEditingSalary(false)
     setSalaryInput('')
   }
 
-  const recentExpenses = useMemo(
-    () => [...expenses].slice(0, 5),
-    [expenses]
-  )
-
-  const activeGoals = (goals || []).filter((g) => g.currentAmount < g.targetAmount)
-  const topGoal = activeGoals[0] || null
-  const topGoalPct = topGoal ? Math.min((topGoal.currentAmount / topGoal.targetAmount) * 100, 100) : 0
+  const recentExpenses = useMemo(() => [...expenses].slice(0, 5), [expenses])
+  const activeGoals    = (goals || []).filter(g => g.currentAmount < g.targetAmount)
+  const topGoal        = activeGoals[0] || null
+  const topGoalPct     = topGoal ? Math.min((topGoal.currentAmount / topGoal.targetAmount) * 100, 100) : 0
 
   const greeting = () => {
     const h = now.getHours()
@@ -78,7 +119,7 @@ export default function Dashboard() {
       <div className={styles.balanceCard}>
         <p className={styles.balanceLabel}>{t.dashboard.remaining}</p>
         <p className={styles.balanceAmount} style={{ color: remaining >= 0 ? '#30d158' : '#ff453a' }}>
-          {formatAmount(remaining)}
+          {fmt(remaining)}
         </p>
         <div className={styles.progressBar}>
           <div
@@ -90,7 +131,7 @@ export default function Dashboard() {
           />
         </div>
         <div className={styles.balanceMeta}>
-          <span>{t.dashboard.spent}: {formatAmount(totalSpent)}</span>
+          <span>{t.dashboard.spent}: {fmt(totalSpent)}</span>
           {editingSalary ? (
             <span className={styles.salaryEditRow}>
               <input
@@ -115,22 +156,40 @@ export default function Dashboard() {
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${formatAmount(currentSalary)}` : t.dashboard.enterSalary}
+              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${fmt(currentSalary)}` : t.dashboard.enterSalary}
             </button>
           )}
         </div>
+
+        {/* Forecast row */}
+        {forecast && (
+          <div className={styles.forecastRow}>
+            <span className={styles.forecastLabel}>Prognoza do końca miesiąca:</span>
+            <span
+              className={styles.forecastValue}
+              style={{ color: forecast.diff > 0 ? '#ff453a' : '#30d158' }}
+            >
+              ~{fmt(forecast.projected)}
+              {currentSalary > 0 && (
+                <span className={styles.forecastDiff}>
+                  {' '}({forecast.diff > 0 ? '+' : ''}{fmt(Math.abs(forecast.diff))} {forecast.diff > 0 ? 'powyżej' : 'poniżej'} budżetu)
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Quick stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <p className={styles.statLabel}>{t.dashboard.recurringPayments}</p>
-          <p className={styles.statValue}>{formatAmount(recurringTotal)}</p>
+          <p className={styles.statValue}>{fmt(recurringTotal)}</p>
           <p className={styles.statSub}>{t.dashboard.monthly}</p>
         </div>
         <div className={styles.statCard}>
           <p className={styles.statLabel}>{t.dashboard.expenses}</p>
-          <p className={styles.statValue}>{formatAmount(expensesTotal)}</p>
+          <p className={styles.statValue}>{fmt(expensesTotal)}</p>
           <p className={styles.statSub}>{monthExpenses.length} {t.dashboard.transactions}</p>
         </div>
         <div className={styles.statCard} style={{ borderColor: savingsRate >= 20 ? 'rgba(48,209,88,0.3)' : 'rgba(255,68,58,0.3)' }}>
@@ -141,6 +200,42 @@ export default function Dashboard() {
           <p className={styles.statSub}>{t.dashboard.income}</p>
         </div>
       </div>
+
+      {/* Budget alerts widget */}
+      {budgetAlerts.length > 0 ? (
+        <div className={styles.budgetWidget} onClick={() => navigate('/budgets')}>
+          <div className={styles.budgetWidgetHeader}>
+            <p className={styles.budgetWidgetTitle}>⚠️ Limity budżetowe</p>
+            <span className={styles.budgetWidgetLink}>Zarządzaj →</span>
+          </div>
+          {budgetAlerts.map(b => (
+            <div key={b.catId} className={styles.budgetAlertRow}>
+              <span className={styles.budgetAlertIcon}>{b.cat.icon}</span>
+              <span className={styles.budgetAlertName}>{b.cat.label}</span>
+              <div className={styles.budgetAlertBarWrap}>
+                <div
+                  className={styles.budgetAlertBar}
+                  style={{
+                    width: `${Math.min(b.pct, 100)}%`,
+                    background: b.pct >= 100 ? '#ff453a' : '#ff9f0a',
+                  }}
+                />
+              </div>
+              <span
+                className={styles.budgetAlertPct}
+                style={{ color: b.pct >= 100 ? '#ff453a' : '#ff9f0a' }}
+              >
+                {b.pct.toFixed(0)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : Object.keys(categoryBudgets).length === 0 ? (
+        <button className={styles.budgetWidgetEmpty} onClick={() => navigate('/budgets')}>
+          <span>🎯</span>
+          <span>Ustaw limity budżetowe dla kategorii</span>
+        </button>
+      ) : null}
 
       {/* Quick add */}
       <button className={styles.addBtn} onClick={() => navigate('/add-expense')}>
@@ -159,7 +254,7 @@ export default function Dashboard() {
             <div className={styles.goalWidgetInfo}>
               <p className={styles.goalWidgetName}>{topGoal.name}</p>
               <p className={styles.goalWidgetAmounts}>
-                {formatAmount(topGoal.currentAmount)} / {formatAmount(topGoal.targetAmount)}
+                {fmt(topGoal.currentAmount)} / {fmt(topGoal.targetAmount)}
               </p>
             </div>
             <div className={styles.goalWidgetRight}>
@@ -172,7 +267,7 @@ export default function Dashboard() {
           </div>
           {remaining > 0 && (
             <p className={styles.goalWidgetCapacity}>
-              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{formatAmount(remaining)}</strong>
+              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{fmt(remaining)}</strong>
             </p>
           )}
         </div>
@@ -209,7 +304,7 @@ export default function Dashboard() {
                     <p className={styles.expenseName}>{e.description || cat.label}</p>
                     <p className={styles.expenseDate}>{formatDate(e.date)}</p>
                   </div>
-                  <p className={styles.expenseAmount}>-{formatAmount(e.amount)}</p>
+                  <p className={styles.expenseAmount}>-{fmt(e.amount)}</p>
                 </div>
               )
             })}

@@ -102,6 +102,12 @@ const useStore = create(
         set((s) => ({
           categoryBudgets: { ...s.categoryBudgets, [category]: amount },
         })),
+      removeCategoryBudget: (category) =>
+        set((s) => {
+          const next = { ...s.categoryBudgets }
+          delete next[category]
+          return { categoryBudgets: next }
+        }),
 
       // === WŁASNE KATEGORIE ===
       customCategories: [],
