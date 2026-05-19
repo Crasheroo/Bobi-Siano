@@ -19,6 +19,7 @@ export default function Import() {
   const [step, setStep] = useState('upload') // upload | preview | success
   const [parsing, setParsing] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiStatus, setAiStatus] = useState('') // '' | 'ok:N' | 'error:msg' | 'nokey'
   const [error, setError] = useState('')
   const [transactions, setTransactions] = useState([])
   const [selected, setSelected] = useState({})
@@ -53,18 +54,23 @@ export default function Import() {
 
       // AI categorisation runs after preview is shown — non-blocking
       const apiKey = settings?.geminiApiKey
-      if (apiKey) {
-        setAiLoading(true)
-        try {
-          const aiCats = await aiCategorizeTransactions(parsed, apiKey)
-          if (Object.keys(aiCats).length > 0) {
-            setCats(prev => ({ ...prev, ...aiCats }))
-          }
-        } catch {
-          // silent — AI is optional, don't break the flow
-        }
-        setAiLoading(false)
+      if (!apiKey) {
+        setAiStatus('nokey')
+        return
       }
+      setAiLoading(true)
+      setAiStatus('')
+      try {
+        const aiCats = await aiCategorizeTransactions(parsed, apiKey)
+        const count = Object.keys(aiCats).length
+        if (count > 0) {
+          setCats(prev => ({ ...prev, ...aiCats }))
+        }
+        setAiStatus(`ok:${count}`)
+      } catch (e) {
+        setAiStatus(`error:${e?.message || 'Błąd API'}`)
+      }
+      setAiLoading(false)
       return
     } catch (e) {
       setError(t.import.errorRead(e?.message || 'Spróbuj ponownie'))
@@ -247,6 +253,16 @@ export default function Import() {
           <h1 className={styles.title}>{t.import.previewTitle}</h1>
           {aiLoading ? (
             <p className={styles.subtitle} style={{ color: 'var(--accent-blue)' }}>✨ AI kategoryzuje...</p>
+          ) : aiStatus.startsWith('ok:') ? (
+            <p className={styles.subtitle} style={{ color: '#30d158' }}>
+              ✓ AI poprawiło {aiStatus.slice(3)} kategorii
+            </p>
+          ) : aiStatus.startsWith('error:') ? (
+            <p className={styles.subtitle} style={{ color: '#ff453a' }}>
+              AI błąd: {aiStatus.slice(6)}
+            </p>
+          ) : aiStatus === 'nokey' ? (
+            <p className={styles.subtitle}>{t.import.previewSub} · <span style={{ color: 'var(--text-tertiary)' }}>bez AI (brak klucza)</span></p>
           ) : (
             <p className={styles.subtitle}>{t.import.previewSub}</p>
           )}
