@@ -215,7 +215,7 @@ export const translations = {
     settings: {
       title: 'Ustawienia',
       accountSection: 'Konto i synchronizacja',
-      firebaseNotConfigured: 'Firebase nie jest skonfigurowany. Uzupełnij plik .env.',
+      firebaseNotConfigured: 'Supabase nie jest skonfigurowany. Utwórz plik .env.local z kluczami VITE_SUPABASE_URL i VITE_SUPABASE_ANON_KEY.',
       signOut: 'Wyloguj się',
       syncNote: 'Logowanie synchronizuje Twoje dane między urządzeniami.',
       appearance: 'Wygląd',
@@ -508,7 +508,7 @@ export const translations = {
     settings: {
       title: 'Settings',
       accountSection: 'Account & sync',
-      firebaseNotConfigured: 'Firebase is not configured. Fill in the .env file.',
+      firebaseNotConfigured: 'Supabase is not configured. Create a .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
       signOut: 'Sign out',
       syncNote: 'Signing in syncs your data across devices.',
       appearance: 'Appearance',
