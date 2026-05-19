@@ -5,18 +5,20 @@ import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { parseBank, readFileAsText } from '../services/bankParser.js'
+import { aiCategorizeTransactions } from '../services/aiCategorizer.js'
 import styles from './Import.module.css'
 
 export default function Import() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { addExpense, customCategories, expenses } = useStore()
+  const { addExpense, customCategories, expenses, settings } = useStore()
   const formatAmount = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const fileRef = useRef(null)
 
   const [step, setStep] = useState('upload') // upload | preview | success
   const [parsing, setParsing] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [error, setError] = useState('')
   const [transactions, setTransactions] = useState([])
   const [selected, setSelected] = useState({})
@@ -40,7 +42,6 @@ export default function Import() {
       }
       const sel = {}, catMap = {}
       parsed.forEach((tx, i) => {
-        // Auto-deselect internal transfers (savings goals, own-account moves)
         sel[i] = tx.isExpense && !tx.isInternal
         catMap[i] = tx.category
       })
@@ -48,6 +49,23 @@ export default function Import() {
       setSelected(sel)
       setCats(catMap)
       setStep('preview')
+      setParsing(false)
+
+      // AI categorisation runs after preview is shown — non-blocking
+      const apiKey = settings?.geminiApiKey
+      if (apiKey) {
+        setAiLoading(true)
+        try {
+          const aiCats = await aiCategorizeTransactions(parsed, apiKey)
+          if (Object.keys(aiCats).length > 0) {
+            setCats(prev => ({ ...prev, ...aiCats }))
+          }
+        } catch {
+          // silent — AI is optional, don't break the flow
+        }
+        setAiLoading(false)
+      }
+      return
     } catch (e) {
       setError(t.import.errorRead(e?.message || 'Spróbuj ponownie'))
     }
@@ -227,7 +245,11 @@ export default function Import() {
         </button>
         <div>
           <h1 className={styles.title}>{t.import.previewTitle}</h1>
-          <p className={styles.subtitle}>{t.import.previewSub}</p>
+          {aiLoading ? (
+            <p className={styles.subtitle} style={{ color: 'var(--accent-blue)' }}>✨ AI kategoryzuje...</p>
+          ) : (
+            <p className={styles.subtitle}>{t.import.previewSub}</p>
+          )}
         </div>
         <div style={{ width: 36 }} />
       </div>

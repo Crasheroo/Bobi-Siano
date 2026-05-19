@@ -42,6 +42,17 @@ export default function Settings() {
   const currency = settings?.currency || 'PLN'
   const formatAmount = useFormatCurrency()
 
+  const geminiKey = settings?.geminiApiKey || ''
+  const [geminiInput, setGeminiInput] = useState(geminiKey)
+  const [geminiSaved, setGeminiSaved] = useState(false)
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+
+  const saveGeminiKey = () => {
+    setSettings({ geminiApiKey: geminiInput.trim() })
+    setGeminiSaved(true)
+    setTimeout(() => setGeminiSaved(false), 2000)
+  }
+
   const [confirmClear, setConfirmClear] = useState(null) // 'expenses' | 'all'
 
   const [showAddCat, setShowAddCat] = useState(false)
@@ -516,6 +527,41 @@ export default function Settings() {
 
       {/* Dane */}
       <div className={styles.section}>
+        <p className={styles.sectionLabel}>AI — automatyczna kategoryzacja</p>
+        <div className={styles.group}>
+          <div className={styles.aiKeyRow}>
+            <input
+              className={styles.aiKeyInput}
+              type={showGeminiKey ? 'text' : 'password'}
+              placeholder="Klucz API Google Gemini (opcjonalnie)"
+              value={geminiInput}
+              onChange={e => { setGeminiInput(e.target.value); setGeminiSaved(false) }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button className={styles.aiKeyToggle} onClick={() => setShowGeminiKey(v => !v)} type="button">
+              {showGeminiKey ? '🙈' : '👁'}
+            </button>
+            <button
+              className={styles.aiKeySave}
+              onClick={saveGeminiKey}
+              disabled={geminiInput.trim() === geminiKey}
+            >
+              {geminiSaved ? '✓' : 'Zapisz'}
+            </button>
+          </div>
+          {geminiKey && (
+            <div className={styles.aiKeyStatus}>
+              <span className={styles.aiKeyDot} />
+              <span>AI aktywne — transakcje bez kategorii będą automatycznie oznaczone przy imporcie</span>
+            </div>
+          )}
+        </div>
+        <p className={styles.sectionNote}>
+          Darmowy klucz: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)' }}>aistudio.google.com</a> → Get API Key.{' '}
+          Opisy transakcji są wysyłane do Google Gemini w celu kategoryzacji. Klucz jest przechowywany tylko na tym urządzeniu.
+        </p>
+
         <p className={styles.sectionLabel}>Dane</p>
         <div className={styles.group}>
           {confirmClear === 'expenses' ? (
