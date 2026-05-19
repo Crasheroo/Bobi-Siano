@@ -1,20 +1,21 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signInWithPopup, signOut } from 'firebase/auth'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, CURRENCIES } from '../utils/constants.js'
 import { version } from '../../package.json'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
-import {
-  auth,
-  googleProvider,
-  isFirebaseConfigured,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from '../services/firebase.js'
+import { supabase, isSupabaseConfigured } from '../services/supabase.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import styles from './Settings.module.css'
+
+const SUPABASE_ERRORS = {
+  'Invalid login credentials':                  'Nieprawidłowy email lub hasło',
+  'User already registered':                     'Ten email jest już zarejestrowany',
+  'Password should be at least 6 characters':    'Hasło musi mieć minimum 6 znaków',
+  'Email not confirmed':                          'Potwierdź swój email przed logowaniem',
+  'Signup is disabled':                           'Rejestracja jest tymczasowo wyłączona',
+}
+const mapAuthError = (e) => SUPABASE_ERRORS[e?.message] || e?.message || 'Wystąpił błąd. Spróbuj ponownie.'
 
 const CAT_ICONS = ['🏷️', '🐾', '🎁', '🎮', '💇', '🧴', '🧹', '🍕', '☕', '🎨', '🏊', '🚴', '🌿', '🧸', '👗', '💄', '🔧', '🎵', '⚽', '🐟']
 const CAT_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#ffd60a', '#64d2ff', '#98989e']
@@ -76,11 +77,11 @@ export default function Settings() {
   }
 
   const handleGoogleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider)
-    } catch (e) {
-      console.error('Login error:', e)
-    }
+    if (!supabase) return
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname },
+    })
   }
 
   const handleEmailAuth = async () => {
@@ -102,12 +103,14 @@ export default function Settings() {
     setAuthLoading(true)
     try {
       if (authAction === 'register') {
-        await createUserWithEmailAndPassword(auth, email.trim(), password)
+        const { error } = await supabase.auth.signUp({ email: email.trim(), password })
+        if (error) throw error
       } else {
-        await signInWithEmailAndPassword(auth, email.trim(), password)
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        if (error) throw error
       }
     } catch (e) {
-      setAuthError(t.settings.authErrors[e.code] || t.settings.authErrors.default)
+      setAuthError(mapAuthError(e))
     }
     setAuthLoading(false)
   }
@@ -119,21 +122,20 @@ export default function Settings() {
     }
     setAuthLoading(true)
     try {
-      await sendPasswordResetEmail(auth, email.trim())
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: window.location.origin + window.location.pathname,
+      })
+      if (error) throw error
       setResetSent(true)
       setAuthError('')
     } catch (e) {
-      setAuthError(t.settings.authErrors[e.code] || t.settings.authErrors.default)
+      setAuthError(mapAuthError(e))
     }
     setAuthLoading(false)
   }
 
   const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-    } catch (e) {
-      console.error('Sign out error:', e)
-    }
+    if (supabase) await supabase.auth.signOut()
   }
 
   return (
@@ -152,7 +154,7 @@ export default function Settings() {
       <div className={styles.section}>
         <p className={styles.sectionLabel}>{t.settings.accountSection}</p>
         <div className={styles.group}>
-          {!isFirebaseConfigured ? (
+          {!isSupabaseConfigured ? (
             <div className={styles.row}>
               <p className={styles.rowValue} style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
                 {t.settings.firebaseNotConfigured}
@@ -269,7 +271,7 @@ export default function Settings() {
             </>
           )}
         </div>
-        {isFirebaseConfigured && !user && (
+        {isSupabaseConfigured && !user && (
           <p className={styles.sectionNote}>{t.settings.syncNote}</p>
         )}
       </div>

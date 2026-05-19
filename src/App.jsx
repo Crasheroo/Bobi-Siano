@@ -1,24 +1,24 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
 import useStore from './store/useStore.js'
-import { auth, db, isFirebaseConfigured } from './services/firebase.js'
-import { downloadUserData, uploadUserData, extractSyncData, validateCloudData } from './services/sync.js'
+import { supabase, isSupabaseConfigured } from './services/supabase.js'
+import { downloadUserData, uploadUserData, extractSyncData, validateCloudData } from './services/supabaseSync.js'
 import Layout from './components/layout/Layout.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-const Setup = lazy(() => import('./pages/Setup.jsx'))
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
-const Expenses = lazy(() => import('./pages/Expenses.jsx'))
-const Recurring = lazy(() => import('./pages/Recurring.jsx'))
-const Analytics = lazy(() => import('./pages/Analytics.jsx'))
-const AddExpense = lazy(() => import('./pages/AddExpense.jsx'))
-const Goals = lazy(() => import('./pages/Goals.jsx'))
-const Settings = lazy(() => import('./pages/Settings.jsx'))
-const Privacy = lazy(() => import('./pages/Privacy.jsx'))
-const Import = lazy(() => import('./pages/Import.jsx'))
+const Setup           = lazy(() => import('./pages/Setup.jsx'))
+const Dashboard       = lazy(() => import('./pages/Dashboard.jsx'))
+const Expenses        = lazy(() => import('./pages/Expenses.jsx'))
+const Recurring       = lazy(() => import('./pages/Recurring.jsx'))
+const Analytics       = lazy(() => import('./pages/Analytics.jsx'))
+const AddExpense      = lazy(() => import('./pages/AddExpense.jsx'))
+const Goals           = lazy(() => import('./pages/Goals.jsx'))
+const Settings        = lazy(() => import('./pages/Settings.jsx'))
+const Privacy         = lazy(() => import('./pages/Privacy.jsx'))
+const Import          = lazy(() => import('./pages/Import.jsx'))
 const StatementAnalysis = lazy(() => import('./pages/StatementAnalysis.jsx'))
-const MonthlyHistory    = lazy(() => import('./pages/MonthlyHistory.jsx'))
+const MonthlyHistory  = lazy(() => import('./pages/MonthlyHistory.jsx'))
+const Budgets         = lazy(() => import('./pages/Budgets.jsx'))
 
 function PageLoader() {
   return (
@@ -55,61 +55,75 @@ export default function App() {
     root.style.setProperty('--accent-blue', settings?.accent || '#0a84ff')
   }, [settings?.theme, settings?.accent])
 
-  // Firebase auth listener + initial sync
+  // Supabase auth listener + sync
   useEffect(() => {
-    if (!isFirebaseConfigured) return
+    if (!isSupabaseConfigured) return
 
-    const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userData = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        }
-
-        const prevUser = useStore.getState().user
-        if (prevUser && prevUser.uid !== firebaseUser.uid) {
-          useStore.getState().resetStore()
-        }
-
-        setUser(userData)
-        setSyncing(true)
-        setSyncError(false)
-        try {
-          const cloudData = await downloadUserData(firebaseUser.uid)
-          if (cloudData) {
-            const safe = validateCloudData(cloudData)
-            useStore.setState(safe)
-            setUser(userData)
-          } else {
-            const state = useStore.getState()
-            await uploadUserData(firebaseUser.uid, extractSyncData(state))
-          }
-        } catch (e) {
-          console.error('Sync error:', e)
-          setSyncError(true)
-        }
-        setSyncing(false)
-      } else {
+    const handleSession = async (session) => {
+      if (!session?.user) {
         clearTimeout(syncTimerRef.current)
         useStore.getState().resetStore()
+        return
       }
+
+      const su = session.user
+      const userData = {
+        uid:         su.id,
+        email:       su.email,
+        displayName: su.user_metadata?.full_name || su.user_metadata?.name || su.email?.split('@')[0],
+        photoURL:    su.user_metadata?.avatar_url || su.user_metadata?.picture,
+      }
+
+      const prevUser = useStore.getState().user
+      if (prevUser && prevUser.uid !== su.id) {
+        useStore.getState().resetStore()
+      }
+
+      setUser(userData)
+      setSyncing(true)
+      setSyncError(false)
+
+      try {
+        const cloudData = await downloadUserData(su.id)
+        if (cloudData) {
+          const safe = validateCloudData(cloudData)
+          useStore.setState(safe)
+          setUser(userData)
+        } else {
+          const state = useStore.getState()
+          await uploadUserData(su.id, extractSyncData(state))
+        }
+      } catch (e) {
+        console.error('Sync error:', e)
+        setSyncError(true)
+      }
+      setSyncing(false)
+    }
+
+    // Check existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session))
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session)
     })
 
     // Push local changes to cloud (debounced 5s)
     const unsubStore = useStore.subscribe((state) => {
-      if (!state.user || !db) return
+      if (!state.user) return
       clearTimeout(syncTimerRef.current)
-      syncTimerRef.current = setTimeout(() => {
-        uploadUserData(state.user.uid, extractSyncData(state))
-          .then(() => setSyncError(false))
-          .catch(() => setSyncError(true))
+      syncTimerRef.current = setTimeout(async () => {
+        try {
+          await uploadUserData(state.user.uid, extractSyncData(state))
+          setSyncError(false)
+        } catch {
+          setSyncError(true)
+        }
       }, 5000)
     })
 
     return () => {
-      unsubAuth()
+      subscription.unsubscribe()
       unsubStore()
       clearTimeout(syncTimerRef.current)
     }
@@ -117,31 +131,34 @@ export default function App() {
 
   const basename = import.meta.env.PROD ? '/Lucent' : '/'
 
+  const page = (Component) => (
+    <Suspense fallback={<PageLoader />}><Component /></Suspense>
+  )
+
   return (
     <ErrorBoundary>
       <BrowserRouter basename={basename}>
         <Routes>
           {!profile.setupDone ? (
             <>
-              <Route path="/setup" element={
-                <Suspense fallback={<PageLoader />}><Setup /></Suspense>
-              } />
+              <Route path="/setup" element={page(Setup)} />
               <Route path="*" element={<Navigate to="/setup" replace />} />
             </>
           ) : (
             <Route element={<Layout syncError={syncError} />}>
-              <Route path="/" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
-              <Route path="/expenses" element={<Suspense fallback={<PageLoader />}><Expenses /></Suspense>} />
-              <Route path="/add-expense" element={<Suspense fallback={<PageLoader />}><AddExpense /></Suspense>} />
-              <Route path="/recurring" element={<Suspense fallback={<PageLoader />}><Recurring /></Suspense>} />
-              <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><Analytics /></Suspense>} />
-              <Route path="/goals" element={<Suspense fallback={<PageLoader />}><Goals /></Suspense>} />
-              <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
-              <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><Privacy /></Suspense>} />
-              <Route path="/import" element={<Suspense fallback={<PageLoader />}><Import /></Suspense>} />
-              <Route path="/statement-analysis" element={<Suspense fallback={<PageLoader />}><StatementAnalysis /></Suspense>} />
-              <Route path="/history" element={<Suspense fallback={<PageLoader />}><MonthlyHistory /></Suspense>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/"                  element={page(Dashboard)} />
+              <Route path="/expenses"          element={page(Expenses)} />
+              <Route path="/add-expense"       element={page(AddExpense)} />
+              <Route path="/recurring"         element={page(Recurring)} />
+              <Route path="/analytics"         element={page(Analytics)} />
+              <Route path="/goals"             element={page(Goals)} />
+              <Route path="/budgets"           element={page(Budgets)} />
+              <Route path="/settings"          element={page(Settings)} />
+              <Route path="/privacy"           element={page(Privacy)} />
+              <Route path="/import"            element={page(Import)} />
+              <Route path="/statement-analysis" element={page(StatementAnalysis)} />
+              <Route path="/history"           element={page(MonthlyHistory)} />
+              <Route path="*"                  element={<Navigate to="/" replace />} />
             </Route>
           )}
         </Routes>

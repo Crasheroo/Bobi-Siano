@@ -403,3 +403,118 @@
   transition: border-color 0.15s;
 }
 .goalWidgetEmpty:active { border-color: rgba(235,235,245,0.4); }
+
+/* ── Forecast row (inside balance card) ──────────────────── */
+.forecastRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--separator);
+  flex-wrap: wrap;
+}
+
+.forecastLabel {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.forecastValue {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.forecastDiff {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+/* ── Budget alerts widget ────────────────────────────────── */
+.budgetWidget {
+  margin: 0 16px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--separator);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.budgetWidget:active { opacity: 0.8; }
+
+.budgetWidgetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.budgetWidgetTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.budgetWidgetLink {
+  font-size: 12px;
+  color: var(--accent-blue);
+  font-weight: 500;
+}
+
+.budgetAlertRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.budgetAlertRow:last-child { margin-bottom: 0; }
+
+.budgetAlertIcon { font-size: 15px; flex-shrink: 0; }
+
+.budgetAlertName {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.budgetAlertBarWrap {
+  flex: 1;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.budgetAlertBar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.budgetAlertPct {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.budgetWidgetEmpty {
+  margin: 0 16px 16px;
+  background: none;
+  border: 1px dashed rgba(235,235,245,0.2);
+  border-radius: var(--border-radius-lg);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: calc(100% - 32px);
+  transition: border-color 0.15s;
+}
+.budgetWidgetEmpty:active { border-color: rgba(235,235,245,0.4); }
