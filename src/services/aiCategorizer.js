@@ -3,6 +3,31 @@ const VALID_CATS = new Set([
   'shopping', 'health', 'utilities', 'fitness', 'education', 'travel', 'other',
 ])
 
+// Gemini sometimes answers in Polish or uses synonyms — normalise to our IDs
+const CAT_NORMALIZE = {
+  'jedzenie': 'food', 'spożywcze': 'food', 'supermarket': 'food', 'sklep spożywczy': 'food',
+  'restauracje': 'restaurants', 'jedzenie na mieście': 'restaurants', 'gastronomia': 'restaurants',
+  'transport': 'transport', 'paliwo': 'transport', 'komunikacja': 'transport',
+  'rozrywka': 'entertainment', 'entertainment': 'entertainment',
+  'subskrypcje': 'subscriptions', 'streaming': 'subscriptions',
+  'zakupy': 'shopping', 'odzież': 'shopping', 'elektronika': 'shopping',
+  'zdrowie': 'health', 'apteka': 'health', 'lekarz': 'health',
+  'rachunki': 'utilities', 'media': 'utilities', 'czynsz': 'utilities',
+  'wynajem': 'utilities', 'podatki': 'utilities', 'zus': 'utilities',
+  'ubezpieczenie': 'utilities', 'składki': 'utilities',
+  'fitness': 'fitness', 'siłownia': 'fitness', 'sport': 'fitness',
+  'edukacja': 'education', 'szkolenia': 'education',
+  'podróże': 'travel', 'wakacje': 'travel', 'hotel': 'travel',
+  'inne': 'other', 'nieznane': 'other', 'przelew': 'other',
+}
+
+function normalizeCat(raw) {
+  if (!raw) return 'other'
+  const s = raw.toLowerCase().trim()
+  if (VALID_CATS.has(s)) return s
+  return CAT_NORMALIZE[s] || 'other'
+}
+
 function buildPrompt(items) {
   return `Kategoryzuj polskie transakcje bankowe. Każda to opis przelewu lub płatności kartą.
 
@@ -57,12 +82,12 @@ async function callGemini(items, apiKey) {
 export async function aiCategorizeTransactions(transactions, apiKey) {
   if (!apiKey?.trim() || !transactions.length) return {}
 
-  // Only process expense transactions that are currently 'other'
+  // Process all transactions currently labelled 'other' (income/internal won't be imported anyway)
   const toProcess = transactions
     .map((tx, i) => ({ i, tx }))
-    .filter(({ tx }) => tx.category === 'other' && tx.isExpense && !tx.isInternal)
+    .filter(({ tx }) => tx.category === 'other')
 
-  if (!toProcess.length) return {}
+  if (!toProcess.length) return { __none: true }
 
   const result = {}
   const CHUNK = 80 // stay well under token limits
@@ -74,8 +99,9 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
     try {
       const parsed = await callGemini(items, apiKey)
       parsed.forEach(r => {
-        if (r.id >= 0 && r.id < chunk.length && VALID_CATS.has(r.cat)) {
-          result[chunk[r.id].i] = r.cat
+        if (r.id >= 0 && r.id < chunk.length) {
+          const cat = normalizeCat(r.cat || r.category || r.kategoria || '')
+          result[chunk[r.id].i] = cat
         }
       })
     } catch (e) {

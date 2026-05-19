@@ -58,15 +58,22 @@ export default function Import() {
         setAiStatus('nokey')
         return
       }
+      const otherCount = parsed.filter(tx => tx.category === 'other').length
       setAiLoading(true)
-      setAiStatus('')
+      setAiStatus(`loading:${otherCount}`)
       try {
         const aiCats = await aiCategorizeTransactions(parsed, apiKey)
-        const count = Object.keys(aiCats).length
-        if (count > 0) {
-          setCats(prev => ({ ...prev, ...aiCats }))
+        if (aiCats.__none) {
+          setAiStatus('none')
+        } else {
+          const count = Object.keys(aiCats).filter(k => k !== '__none').length
+          if (count > 0) {
+            const clean = { ...aiCats }
+            delete clean.__none
+            setCats(prev => ({ ...prev, ...clean }))
+          }
+          setAiStatus(`ok:${count}`)
         }
-        setAiStatus(`ok:${count}`)
       } catch (e) {
         setAiStatus(`error:${e?.message || 'Błąd API'}`)
       }
@@ -252,7 +259,9 @@ export default function Import() {
         <div>
           <h1 className={styles.title}>{t.import.previewTitle}</h1>
           {aiLoading ? (
-            <p className={styles.subtitle} style={{ color: 'var(--accent-blue)' }}>✨ AI kategoryzuje...</p>
+            <p className={styles.subtitle} style={{ color: 'var(--accent-blue)' }}>
+              ✨ AI kategoryzuje {aiStatus.startsWith('loading:') ? aiStatus.slice(8) : ''}...
+            </p>
           ) : aiStatus.startsWith('ok:') ? (
             <p className={styles.subtitle} style={{ color: '#30d158' }}>
               ✓ AI poprawiło {aiStatus.slice(3)} kategorii
@@ -261,6 +270,8 @@ export default function Import() {
             <p className={styles.subtitle} style={{ color: '#ff453a' }}>
               AI błąd: {aiStatus.slice(6)}
             </p>
+          ) : aiStatus === 'none' ? (
+            <p className={styles.subtitle} style={{ color: 'var(--text-tertiary)' }}>AI: brak transakcji "inne" do kategoryzacji</p>
           ) : aiStatus === 'nokey' ? (
             <p className={styles.subtitle}>{t.import.previewSub} · <span style={{ color: 'var(--text-tertiary)' }}>bez AI (brak klucza)</span></p>
           ) : (
