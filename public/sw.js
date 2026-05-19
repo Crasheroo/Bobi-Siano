@@ -1,9 +1,15 @@
-const CACHE = 'lucent-v1'
-const STATIC = ['/', '/manifest.json', '/logo.png']
+const VERSION = 'v2'
+const BASE = self.location.pathname.replace(/\/sw\.js$/, '')
+const CACHE = `lucent-${VERSION}`
+const STATIC = [
+  `${BASE}/`,
+  `${BASE}/manifest.json`,
+  `${BASE}/logo.png`,
+]
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(STATIC))
+    caches.open(CACHE).then((c) => c.addAll(STATIC)).catch(() => {})
   )
   self.skipWaiting()
 })
@@ -19,8 +25,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return
-  // Skip cross-origin requests (Firebase, etc.)
   if (!e.request.url.startsWith(self.location.origin)) return
+  if (e.request.url.includes('supabase.co')) return
 
   e.respondWith(
     fetch(e.request)

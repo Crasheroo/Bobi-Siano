@@ -28,11 +28,14 @@
 
     <title>Lucent</title>
 
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; img-src 'self' data: https: blob:; font-src 'self'; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self';" />
+
     <script>
       // GitHub Pages SPA fix — przywróć ścieżkę po przekierowaniu z 404.html
       (function() {
         var redirect = new URLSearchParams(window.location.search).get('redirect');
-        if (redirect) {
+        if (redirect && redirect.charAt(0) === '/' && redirect.charAt(1) !== '/' && redirect.charAt(1) !== '\\') {
           var repo = '/Lucent';
           window.history.replaceState(null, null, repo + redirect);
         }

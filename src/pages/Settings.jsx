@@ -135,6 +135,7 @@ export default function Settings() {
   }
 
   const handleSignOut = async () => {
+    localStorage.removeItem('lucent-storage')
     if (supabase) await supabase.auth.signOut()
   }
 

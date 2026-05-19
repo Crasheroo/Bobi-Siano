@@ -37,8 +37,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Klucz OpenAI — dodaj w: GitHub repo → Settings → Secrets → Actions
-          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+          # Dodaj w: GitHub repo → Settings → Secrets and variables → Actions
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -185,8 +185,8 @@ const useStore = create(
     {
       name: 'lucent-storage',
       version: 1,
-      onRehydrateStorage: () => (state, error) => {
-        if (error) console.error('Failed to rehydrate store:', error)
+      onRehydrateStorage: () => (_state, error) => {
+        if (error && import.meta.env.DEV) console.error('Failed to rehydrate store:', error)
       },
     }
   )

@@ -22,7 +22,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('App error:', error, info)
+    if (import.meta.env.DEV) console.error('App error:', error, info)
   }
 
   render() {
