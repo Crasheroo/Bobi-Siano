@@ -204,11 +204,29 @@
   color: var(--text-primary);
 }
 
+/* ── Stacked bar ─────────────────────────────────────────── */
+.stackedBar {
+  display: flex;
+  height: 10px;
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  background: var(--bg-quaternary);
+  margin-bottom: 20px;
+  gap: 2px;
+}
+
+.stackedSegment {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+/* ── Budget breakdown rows ───────────────────────────────── */
 .budgetBreakdown {
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .budgetRow {
@@ -225,15 +243,33 @@
 }
 
 .budgetName {
-  flex: 1;
+  width: 110px;
+  flex-shrink: 0;
   font-size: 14px;
   color: var(--text-primary);
+}
+
+.budgetBarWrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-quaternary);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+}
+
+.budgetBar {
+  height: 100%;
+  border-radius: var(--border-radius-full);
+  transition: width 0.5s ease;
+  min-width: 3px;
 }
 
 .budgetVal {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  min-width: 72px;
+  text-align: right;
 }
 
 .budgetPct {
@@ -241,6 +277,16 @@
   color: var(--text-secondary);
   min-width: 32px;
   text-align: right;
+}
+
+.budgetTotal {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--separator);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .empty {

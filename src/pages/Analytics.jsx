@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Area, AreaChart
+  PieChart, Pie, Cell, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart
 } from 'recharts'
 import useStore from '../store/useStore.js'
 import { CATEGORIES } from '../utils/constants.js'
@@ -205,28 +205,54 @@ export default function Analytics() {
       {activeTab === 'budget' && (
         <div className={styles.chartSection}>
           <p className={styles.chartTitle}>{t.analytics.budgetTitle}</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={budgetData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
-                {budgetData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className={styles.budgetBreakdown}>
-            {budgetData.map((item, i) => (
-              <div key={i} className={styles.budgetRow}>
-                <div className={styles.budgetDot} style={{ background: item.color }} />
-                <span className={styles.budgetName}>{item.name}</span>
-                <span className={styles.budgetVal}>{formatAmount(item.value)}</span>
-                <span className={styles.budgetPct}>
-                  {currentSalary > 0 ? ((item.value / currentSalary) * 100).toFixed(0) : 0}%
-                </span>
+
+          {currentSalary === 0 ? (
+            <div className={styles.empty}><span>💰</span><p>Ustaw wypłatę na dashboardzie aby zobaczyć rozkład budżetu</p></div>
+          ) : (
+            <>
+              {/* Stacked bar */}
+              <div className={styles.stackedBar}>
+                {budgetData.map((item) => {
+                  const pct = currentSalary > 0 ? (item.value / currentSalary) * 100 : 0
+                  return pct > 0 ? (
+                    <div
+                      key={item.name}
+                      className={styles.stackedSegment}
+                      style={{ width: `${Math.min(pct, 100)}%`, background: item.color }}
+                      title={`${item.name}: ${formatAmount(item.value)}`}
+                    />
+                  ) : null
+                })}
               </div>
-            ))}
-          </div>
+
+              {/* Breakdown rows */}
+              <div className={styles.budgetBreakdown}>
+                {budgetData.map((item) => {
+                  const pct = currentSalary > 0 ? (item.value / currentSalary) * 100 : 0
+                  return (
+                    <div key={item.name} className={styles.budgetRow}>
+                      <div className={styles.budgetDot} style={{ background: item.color }} />
+                      <span className={styles.budgetName}>{item.name}</span>
+                      <div className={styles.budgetBarWrap}>
+                        <div
+                          className={styles.budgetBar}
+                          style={{ width: `${Math.min(pct, 100)}%`, background: item.color + 'aa' }}
+                        />
+                      </div>
+                      <span className={styles.budgetVal}>{formatAmount(item.value)}</span>
+                      <span className={styles.budgetPct}>{pct.toFixed(0)}%</span>
+                    </div>
+                  )
+                })}
+                {currentSalary > 0 && (
+                  <div className={styles.budgetTotal}>
+                    <span>Budżet miesięczny</span>
+                    <span>{formatAmount(currentSalary)}</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

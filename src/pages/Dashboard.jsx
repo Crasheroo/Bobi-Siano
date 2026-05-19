@@ -5,6 +5,7 @@ import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod } from '../utils/payPeriod.js'
+import QuickAddModal from '../components/QuickAddModal.jsx'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
@@ -19,6 +20,7 @@ export default function Dashboard() {
 
   const [editingSalary, setEditingSalary] = useState(false)
   const [salaryInput, setSalaryInput] = useState('')
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
 
   const now = new Date()
   const monthName = t.months[now.getMonth()]
@@ -43,6 +45,19 @@ export default function Dashboard() {
   const remaining      = currentSalary - totalSpent
   const savingsRate    = currentSalary > 0 ? ((remaining / currentSalary) * 100) : 0
   const spentPercent   = currentSalary > 0 ? Math.min((totalSpent / currentSalary) * 100, 100) : 0
+
+  const statusBanner = useMemo(() => {
+    if (currentSalary === 0) return null
+    if (spentPercent >= 100)
+      return { text: `Budżet przekroczony o ${fmt(Math.abs(remaining))} — czas zacisnąć pasa`, color: '#ff453a', bg: 'rgba(255,69,58,0.12)' }
+    if (spentPercent >= 85)
+      return { text: `Zostało tylko ${fmt(remaining)} — ostrożnie z wydatkami`, color: '#ff9f0a', bg: 'rgba(255,159,10,0.12)' }
+    if (spentPercent >= 70)
+      return { text: `Wydałeś ${spentPercent.toFixed(0)}% budżetu — miej oko na wydatki`, color: '#ff9f0a', bg: 'rgba(255,159,10,0.12)' }
+    if (savingsRate >= 20)
+      return { text: `Świetnie! Oszczędzasz ${savingsRate.toFixed(0)}% wypłaty — tak trzymaj`, color: '#30d158', bg: 'rgba(48,209,88,0.1)' }
+    return { text: `Na razie w porządku — ${fmt(remaining)} do dyspozycji`, color: '#30d158', bg: 'rgba(48,209,88,0.08)' }
+  }, [currentSalary, spentPercent, remaining, savingsRate, fmt])
 
   // ── Month-end spending forecast ──────────────────────────────────────
   const forecast = useMemo(() => {
@@ -180,6 +195,13 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Status banner */}
+      {statusBanner && (
+        <div className={styles.statusBanner} style={{ background: statusBanner.bg, color: statusBanner.color }}>
+          {statusBanner.text}
+        </div>
+      )}
+
       {/* Quick stats */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
@@ -238,7 +260,7 @@ export default function Dashboard() {
       ) : null}
 
       {/* Quick add */}
-      <button className={styles.addBtn} onClick={() => navigate('/add-expense')}>
+      <button className={styles.addBtn} onClick={() => setShowQuickAdd(true)}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -311,6 +333,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      {showQuickAdd && <QuickAddModal onClose={() => setShowQuickAdd(false)} />}
     </div>
   )
 }
