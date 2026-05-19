@@ -76,7 +76,9 @@ export default function Import() {
 
   const toggleAll = (val) => {
     const next = { ...selected }
-    visible.forEach(({ _i }) => { next[_i] = val })
+    visible.forEach((tx) => {
+      if (tx.isExpense && !tx.isInternal) next[tx._i] = val
+    })
     setSelected(next)
   }
 
@@ -92,6 +94,7 @@ export default function Import() {
     const importedDates = []
     transactions.forEach((tx, i) => {
       if (!selected[i]) return
+      if (!tx.isExpense || tx.isInternal) return
       if (isDuplicate(tx)) { skipped++; return }
       addExpense({
         amount: tx.amount,
@@ -266,21 +269,27 @@ export default function Import() {
         ) : (
           visible.map((tx) => {
             const cat = getCat(cats[tx._i])
+            const isIncome = !tx.isExpense
             const isChecked = !!selected[tx._i]
             const dup = isDuplicate(tx)
             return (
               <div
                 key={tx._i}
-                className={`${styles.txRow} ${!isChecked ? styles.txRowDimmed : ''}`}
-                onClick={() => setSelected((s) => ({ ...s, [tx._i]: !s[tx._i] }))}
+                className={`${styles.txRow} ${isIncome ? styles.txRowIncome : !isChecked ? styles.txRowDimmed : ''}`}
+                onClick={isIncome ? undefined : () => setSelected((s) => ({ ...s, [tx._i]: !s[tx._i] }))}
+                style={isIncome ? { cursor: 'default' } : undefined}
               >
-                <div className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ''}`}>
-                  {isChecked && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <polyline points="20 6 9 17 4 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </div>
+                {isIncome ? (
+                  <div className={styles.incomeBadge}>↓</div>
+                ) : (
+                  <div className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ''}`}>
+                    {isChecked && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <polyline points="20 6 9 17 4 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.txCatBadge} style={{ background: cat.color + '22' }}>
                   <span>{cat.icon}</span>
@@ -291,26 +300,29 @@ export default function Import() {
                   <p className={styles.txDate}>
                     {formatDate(tx.date)}
                     {dup && <span style={{ color: 'var(--text-tertiary)', marginLeft: 6, fontSize: 11 }}>duplikat</span>}
+                    {isIncome && <span style={{ color: '#30d158', marginLeft: 6, fontSize: 11 }}>przychód</span>}
                   </p>
                 </div>
 
                 <div className={styles.txRight}>
-                  <p className={styles.txAmount} style={{ color: tx.isExpense ? '#ff453a' : '#30d158' }}>
-                    {tx.isExpense ? '-' : '+'}{formatAmount(tx.amount)}
+                  <p className={styles.txAmount} style={{ color: isIncome ? '#30d158' : '#ff453a' }}>
+                    {isIncome ? '+' : '-'}{formatAmount(tx.amount)}
                   </p>
-                  <select
-                    className={styles.catSelect}
-                    value={cats[tx._i] || 'other'}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      setCats((c) => ({ ...c, [tx._i]: e.target.value }))
-                    }}
-                  >
-                    {allCategories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
-                    ))}
-                  </select>
+                  {!isIncome && (
+                    <select
+                      className={styles.catSelect}
+                      value={cats[tx._i] || 'other'}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        setCats((c) => ({ ...c, [tx._i]: e.target.value }))
+                      }}
+                    >
+                      {allCategories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             )
