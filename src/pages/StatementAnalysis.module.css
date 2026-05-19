@@ -197,13 +197,17 @@
 /* ── Tabs ─────────────────────────────────────────────────── */
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   padding: 8px 16px 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.tabs::-webkit-scrollbar { display: none; }
 
 .tab {
-  flex: 1;
-  padding: 9px 4px;
+  flex-shrink: 0;
+  padding: 9px 14px;
   background: var(--bg-secondary);
   border: 0.5px solid var(--separator);
   border-radius: 10px;
@@ -212,6 +216,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .tabActive {

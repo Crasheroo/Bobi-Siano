@@ -244,7 +244,7 @@ export default function StatementAnalysis() {
               { id: 'categories', label: 'Kategorie' },
               { id: 'monthly',    label: 'Miesiące' },
               { id: 'merchants',  label: 'Miejsca' },
-              { id: 'advice',     label: '💡 Porady' },
+              { id: 'advice',     label: 'Porady' },
             ].map(tab => (
               <button
                 key={tab.id}
