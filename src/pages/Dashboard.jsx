@@ -29,9 +29,12 @@ export default function Dashboard() {
   const monthName = t.months[now.getMonth()]
   const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
-  const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
+  const periodYear  = payPeriod.start.getFullYear()
+  const periodMonth = payPeriod.start.getMonth()
+
+  const currentSalary = getSalaryForMonth(periodYear, periodMonth)
   const salarySetThisMonth = (monthlySalaries || []).some(
-    (ms) => ms.year === now.getFullYear() && ms.month === now.getMonth()
+    (ms) => ms.year === periodYear && ms.month === periodMonth
   )
 
   // Use pay period expenses (respects salary day)
@@ -62,23 +65,17 @@ export default function Dashboard() {
     return { text: `Na razie w porządku — ${fmt(remaining)} do dyspozycji`, color: '#30d158', bg: 'rgba(48,209,88,0.08)' }
   }, [currentSalary, spentPercent, remaining, savingsRate, fmt])
 
-  // ── Month-end spending forecast ──────────────────────────────────────
+  // ── Pay-period-end spending forecast ────────────────────────────────
   const forecast = useMemo(() => {
-    const dayOfMonth  = now.getDate()
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    if (dayOfMonth < 5 || monthExpenses.length === 0) return null
+    const periodDays  = Math.round((payPeriod.end - payPeriod.start) / 86_400_000) + 1
+    const elapsedDays = Math.max(1, Math.round((now - payPeriod.start) / 86_400_000) + 1)
+    if (elapsedDays < 5 || monthExpenses.length === 0) return null
 
-    // Use calendar-month expenses for the forecast (not pay period)
-    const calMonthExpenses = expenses.filter(e => {
-      const d = new Date(e.date)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
-    const calTotal = calMonthExpenses.reduce((s, e) => s + e.amount, 0)
-    const dailyAvg = calTotal / dayOfMonth
-    const projected = Math.round(dailyAvg * daysInMonth)
-    const diff = projected - currentSalary
-    return { projected, diff, dailyAvg }
-  }, [expenses, now, currentSalary, monthExpenses.length])
+    const dailyAvg  = expensesTotal / elapsedDays
+    const projected = Math.round(dailyAvg * periodDays)
+    const diff      = projected - currentSalary
+    return { projected, diff }
+  }, [payPeriod.start, payPeriod.end, expensesTotal, currentSalary, monthExpenses.length])
 
   // ── Budget widget: categories near/over limit ────────────────────────
   const budgetAlerts = useMemo(() => {
@@ -100,7 +97,7 @@ export default function Dashboard() {
 
   const handleSalarySave = () => {
     const val = Number(salaryInput)
-    if (!isNaN(val) && val >= 0) setMonthlySalary(now.getFullYear(), now.getMonth(), val)
+    if (!isNaN(val) && val >= 0) setMonthlySalary(periodYear, periodMonth, val)
     setShowSalaryModal(false)
     setSalaryInput('')
   }

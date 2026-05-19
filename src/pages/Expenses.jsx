@@ -4,13 +4,14 @@ import useStore from '../store/useStore.js'
 import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
+import { getPayPeriod } from '../utils/payPeriod.js'
 import styles from './Expenses.module.css'
 
 export default function Expenses() {
   const navigate = useNavigate()
   const t = useTranslation()
   const formatAmount = useFormatCurrency()
-  const { expenses, addExpense, deleteExpense, editExpense, customCategories } = useStore()
+  const { expenses, addExpense, deleteExpense, editExpense, customCategories, profile } = useStore()
   const allCategories = [...CATEGORIES, ...customCategories]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
   const [search, setSearch] = useState('')
@@ -23,6 +24,7 @@ export default function Expenses() {
   const [editDate, setEditDate] = useState('')
   const [filterMonth, setFilterMonth] = useState('current')
   const now = new Date()
+  const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
   const openEdit = (e) => {
     setEditingExpense(e)
@@ -60,7 +62,7 @@ export default function Expenses() {
       const matchesCat = filterCat === 'all' || e.category === filterCat
       const matchesMonth = filterMonth === 'all' || (() => {
         const d = new Date(e.date)
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        return d >= payPeriod.start && d <= payPeriod.end
       })()
       return matchesSearch && matchesCat && matchesMonth
     })

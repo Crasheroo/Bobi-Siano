@@ -46,28 +46,29 @@ export default function Analytics() {
   const last6Months = useMemo(() => {
     const result = []
     for (let i = 5; i >= 0; i--) {
-      const d = new Date()
-      d.setMonth(d.getMonth() - i)
-      const m = d.getMonth()
-      const y = d.getFullYear()
-      const monthExp = expenses.filter((e) => {
-        const ed = new Date(e.date)
-        return ed.getMonth() === m && ed.getFullYear() === y
+      const ref = new Date()
+      ref.setMonth(ref.getMonth() - i)
+      const period = getPayPeriod(ref, salaryDay)
+      const periodExp = expenses.filter(e => {
+        const d = new Date(e.date)
+        return d >= period.start && d <= period.end
       })
-      const total = monthExp.reduce((s, e) => s + e.amount, 0)
+      const total = periodExp.reduce((s, e) => s + e.amount, 0)
+      const py = period.start.getFullYear()
+      const pm = period.start.getMonth()
       result.push({
-        month: t.monthsShort[m],
+        month: t.monthsShort[pm],
         wydatki: Math.round(total),
-        budzet: Math.round(getSalaryForMonth(y, m)),
+        budzet: Math.round(getSalaryForMonth(py, pm)),
       })
     }
     return result
-  }, [expenses, getSalaryForMonth, t.monthsShort])
+  }, [expenses, getSalaryForMonth, salaryDay, t.monthsShort])
 
   const recurringTotal = getMonthlyRecurringTotal()
   const expensesTotal = monthExpenses.reduce((s, e) => s + e.amount, 0)
   const totalSpent = expensesTotal + recurringTotal
-  const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
+  const currentSalary = getSalaryForMonth(payPeriod.start.getFullYear(), payPeriod.start.getMonth())
   const saved = currentSalary - totalSpent
   const savingRate = currentSalary > 0 ? (saved / currentSalary) * 100 : 0
 
