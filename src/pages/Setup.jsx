@@ -27,7 +27,7 @@ export default function Setup() {
       {step === 0 && (
         <div className={styles.slide} key="step0">
           <div className={styles.iconWrap}>
-            <img src="/logo.png" alt="Lucent" className={styles.bigIcon} />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Lucent" className={styles.bigIcon} />
           </div>
           <h1 className={styles.title}>Lucent</h1>
           <p className={styles.subtitle}>{t.setup.subtitle}</p>

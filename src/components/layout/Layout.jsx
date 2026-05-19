@@ -88,7 +88,7 @@ export default function Layout({ syncError }) {
       {/* Desktop sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
-          <img src="/logo.png" alt="Lucent" className={styles.sidebarLogoIcon} />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Lucent" className={styles.sidebarLogoIcon} />
           <span className={styles.sidebarLogoText}>Lucent</span>
         </div>
 
