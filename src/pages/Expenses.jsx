@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod } from '../utils/payPeriod.js'
+import UndoToast from '../components/UndoToast.jsx'
 import styles from './Expenses.module.css'
 
 export default function Expenses() {
@@ -23,6 +24,7 @@ export default function Expenses() {
   const [editCategory, setEditCategory] = useState('')
   const [editDate, setEditDate] = useState('')
   const [filterMonth, setFilterMonth] = useState('current')
+  const [pendingDelete, setPendingDelete] = useState(null)
   const now = new Date()
   const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
@@ -45,6 +47,20 @@ export default function Expenses() {
     })
     setEditingExpense(null)
   }
+
+  const handleDeleteWithUndo = useCallback((expense) => {
+    setPendingDelete(expense)
+    setSwipedId(null)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (pendingDelete) deleteExpense(pendingDelete.id)
+    setPendingDelete(null)
+  }, [pendingDelete, deleteExpense])
+
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null)
+  }, [])
 
   const handleDuplicate = () => {
     addExpense({
@@ -165,8 +181,11 @@ export default function Expenses() {
       <div className={styles.list}>
         {groupedByDate.length === 0 ? (
           <div className={styles.empty}>
-            <span>🔍</span>
-            <p>{t.expenses.noExpenses}</p>
+            <span>🧾</span>
+            <p>{filterMonth === 'current' ? 'Brak wydatków w bieżącym okresie' : 'Nie masz jeszcze żadnych wydatków'}</p>
+            <button className={styles.emptyAction} onClick={() => navigate('/add-expense')}>
+              + Dodaj pierwszy wydatek
+            </button>
           </div>
         ) : (
           groupedByDate.map((group, gi) => (
@@ -205,8 +224,7 @@ export default function Expenses() {
                               className={styles.deleteBtn}
                               onClick={(ev) => {
                                 ev.stopPropagation()
-                                deleteExpense(e.id)
-                                setSwipedId(null)
+                                handleDeleteWithUndo(e)
                               }}
                             >
                               {t.common.delete}
@@ -284,6 +302,14 @@ export default function Expenses() {
             </div>
           </div>
         </div>
+      )}
+
+      {pendingDelete && (
+        <UndoToast
+          message={`Usunięto: ${pendingDelete.description || getCat(pendingDelete.category)?.label}`}
+          onUndo={cancelDelete}
+          onDismiss={confirmDelete}
+        />
       )}
     </div>
   )

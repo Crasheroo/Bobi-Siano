@@ -20,7 +20,7 @@ export const translations = {
       overview: 'Przegląd',
       expenses: 'Wydatki',
       analytics: 'Analiza',
-      recurring: 'Stałe',
+      recurring: 'Rachunki',
       goals: 'Cele',
       settings: 'Ustawienia',
     },

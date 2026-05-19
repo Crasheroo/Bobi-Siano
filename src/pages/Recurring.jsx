@@ -113,8 +113,12 @@ export default function Recurring() {
       <div className={styles.list}>
         {recurring.length === 0 ? (
           <div className={styles.empty}>
-            <span>🔄</span>
-            <p>{t.recurring.empty}</p>
+            <span>💳</span>
+            <p>Brak stałych płatności</p>
+            <p className={styles.emptyHint}>Dodaj czynsz, raty, subskrypcje — będą automatycznie wliczane do budżetu</p>
+            <button className={styles.emptyAction} onClick={() => setShowForm(true)}>
+              + Dodaj pierwszą płatność
+            </button>
           </div>
         ) : (
           <div className={styles.items}>

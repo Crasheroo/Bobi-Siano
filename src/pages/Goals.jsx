@@ -225,7 +225,11 @@ export default function Goals() {
       {goals.length === 0 ? (
         <div className={styles.empty}>
           <span>🎯</span>
-          <p>{t.goals.empty}</p>
+          <p>Nie masz jeszcze żadnego celu</p>
+          <p className={styles.emptyHint}>Ustal na co odkładasz — wakacje, sprzęt, poduszka finansowa</p>
+          <button className={styles.emptyAction} onClick={() => setShowForm(true)}>
+            + Dodaj pierwszy cel
+          </button>
         </div>
       ) : (
         <div className={styles.goalsList}>

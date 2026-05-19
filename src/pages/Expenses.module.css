@@ -390,3 +390,17 @@
 
 .empty span { font-size: 40px; }
 .empty p { font-size: 16px; color: var(--text-secondary); text-align: center; }
+
+.emptyAction {
+  margin-top: 4px;
+  padding: 12px 24px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: var(--border-radius-full);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.emptyAction:active { opacity: 0.8; }

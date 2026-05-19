@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod } from '../utils/payPeriod.js'
 import QuickAddModal from '../components/QuickAddModal.jsx'
+import OnboardingChecklist from '../components/OnboardingChecklist.jsx'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
@@ -111,6 +112,8 @@ export default function Dashboard() {
 
   const recentExpenses = useMemo(() => [...expenses].slice(0, 5), [expenses])
   const activeGoals    = (goals || []).filter(g => g.currentAmount < g.targetAmount)
+
+  const onboardingDone = salarySetThisMonth && expenses.length > 0 && (goals || []).length > 0
   const topGoal        = activeGoals[0] || null
   const topGoalPct     = topGoal ? Math.min((topGoal.currentAmount / topGoal.targetAmount) * 100, 100) : 0
 
@@ -184,6 +187,15 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Onboarding checklist */}
+      {!onboardingDone && (
+        <OnboardingChecklist
+          hasSalary={salarySetThisMonth}
+          hasExpense={expenses.length > 0}
+          hasGoal={(goals || []).length > 0}
+        />
+      )}
 
       {/* Status banner */}
       {statusBanner && (

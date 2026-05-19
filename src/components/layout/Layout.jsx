@@ -44,10 +44,9 @@ const TABS = [
     labelKey: 'recurring',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <polyline points="17 1 21 5 17 9" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <polyline points="7 23 3 19 7 15" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect x="2" y="5" width="20" height="14" rx="3" stroke={active ? AC : IN} strokeWidth="1.8"/>
+        <path d="M2 10h20" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round"/>
+        <path d="M6 15h4" stroke={active ? AC : IN} strokeWidth="1.8" strokeLinecap="round"/>
       </svg>
     ),
   },
