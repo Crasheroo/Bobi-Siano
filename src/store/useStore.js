@@ -30,6 +30,7 @@ const useStore = create(
         })),
       deleteExpense: (id) =>
         set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) })),
+      clearExpenses: () => set({ expenses: [] }),
 
       // === PRZYCHODY (jednorazowe/dodatkowe) ===
       incomes: [],
