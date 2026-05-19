@@ -101,6 +101,14 @@ export default function Analytics() {
             {salaryDay > 1 ? formatPeriodLabel(payPeriod.start, payPeriod.end) : `${t.months[now.getMonth()]} ${now.getFullYear()}`}
           </p>
         </div>
+        <button className={styles.historyBtn} onClick={() => navigate('/history')} title="Historia miesięcy">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+            <path d="M3 9h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M8 2v3M16 2v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M7 14h2M11 14h2M15 14h2M7 17.5h2M11 17.5h2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
 
       {/* Score card */}
