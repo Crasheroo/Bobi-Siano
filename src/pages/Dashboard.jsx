@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatDate } from '../utils/constants.js'
+import { CATEGORIES, CURRENCIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod } from '../utils/payPeriod.js'
@@ -12,15 +12,18 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { profile, expenses, recurring, goals, monthlySalaries, customCategories,
           categoryBudgets, getCurrentMonthExpenses, getMonthlyRecurringTotal,
-          getSalaryForMonth, setMonthlySalary } = useStore()
+          getSalaryForMonth, setMonthlySalary, addToGoal, settings } = useStore()
   const t = useTranslation()
   const fmt = useFormatCurrency()
+  const currencySymbol = CURRENCIES.find(c => c.code === (settings?.currency || 'PLN'))?.symbol || 'zł'
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
-  const [editingSalary, setEditingSalary] = useState(false)
+  const [showSalaryModal, setShowSalaryModal] = useState(false)
   const [salaryInput, setSalaryInput] = useState('')
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const [showGoalAdd, setShowGoalAdd] = useState(false)
+  const [goalAddInput, setGoalAddInput] = useState('')
 
   const now = new Date()
   const monthName = t.months[now.getMonth()]
@@ -98,8 +101,15 @@ export default function Dashboard() {
   const handleSalarySave = () => {
     const val = Number(salaryInput)
     if (!isNaN(val) && val >= 0) setMonthlySalary(now.getFullYear(), now.getMonth(), val)
-    setEditingSalary(false)
+    setShowSalaryModal(false)
     setSalaryInput('')
+  }
+
+  const handleGoalAddSave = () => {
+    const val = Number(goalAddInput)
+    if (!isNaN(val) && val > 0 && topGoal) addToGoal(topGoal.id, val)
+    setShowGoalAdd(false)
+    setGoalAddInput('')
   }
 
   const recentExpenses = useMemo(() => [...expenses].slice(0, 5), [expenses])
@@ -147,33 +157,16 @@ export default function Dashboard() {
         </div>
         <div className={styles.balanceMeta}>
           <span>{t.dashboard.spent}: {fmt(totalSpent)}</span>
-          {editingSalary ? (
-            <span className={styles.salaryEditRow}>
-              <input
-                className={styles.salaryEditInput}
-                type="number"
-                inputMode="decimal"
-                value={salaryInput}
-                onChange={(e) => setSalaryInput(e.target.value)}
-                onBlur={handleSalarySave}
-                onKeyDown={(e) => e.key === 'Enter' && handleSalarySave()}
-                autoFocus
-                placeholder={currentSalary}
-              />
-              <button className={styles.salaryEditSave} onMouseDown={handleSalarySave}>✓</button>
-            </span>
-          ) : (
-            <button
-              className={salarySetThisMonth ? styles.salaryBtn : styles.salaryBtnNew}
-              onClick={() => { setSalaryInput(String(currentSalary)); setEditingSalary(true) }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 5, flexShrink: 0 }}>
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${fmt(currentSalary)}` : t.dashboard.enterSalary}
-            </button>
-          )}
+          <button
+            className={salarySetThisMonth ? styles.salaryBtn : styles.salaryBtnNew}
+            onClick={() => { setSalaryInput(String(currentSalary || '')); setShowSalaryModal(true) }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 5, flexShrink: 0 }}>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${fmt(currentSalary)}` : t.dashboard.enterSalary}
+          </button>
         </div>
 
         {/* Forecast row */}
@@ -287,11 +280,20 @@ export default function Dashboard() {
           <div className={styles.goalWidgetTrack}>
             <div className={styles.goalWidgetFill} style={{ width: `${topGoalPct}%`, background: topGoal.color }} />
           </div>
-          {remaining > 0 && (
-            <p className={styles.goalWidgetCapacity}>
-              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{fmt(remaining)}</strong>
-            </p>
-          )}
+          <div className={styles.goalWidgetFooter}>
+            {remaining > 0 ? (
+              <p className={styles.goalWidgetCapacity}>
+                {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{fmt(remaining)}</strong>
+              </p>
+            ) : <span />}
+            <button
+              className={styles.goalAddBtn}
+              style={{ borderColor: topGoal.color + '66', color: topGoal.color }}
+              onClick={e => { e.stopPropagation(); setGoalAddInput(''); setShowGoalAdd(true) }}
+            >
+              + Odkładam
+            </button>
+          </div>
         </div>
       ) : (
         <button className={styles.goalWidgetEmpty} onClick={() => navigate('/goals')}>
@@ -334,6 +336,63 @@ export default function Dashboard() {
         )}
       </div>
       {showQuickAdd && <QuickAddModal onClose={() => setShowQuickAdd(false)} />}
+
+      {showSalaryModal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowSalaryModal(false)}>
+          <div className={styles.modalSheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHandle} />
+            <p className={styles.modalTitle}>Wypłata — {monthName}</p>
+            <p className={styles.modalHint}>Wpisz całość: podstawa + premie + nadgodziny</p>
+            <div className={styles.modalAmountRow}>
+              <span className={styles.modalCurrency}>{currencySymbol}</span>
+              <input
+                className={styles.modalAmountInput}
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={salaryInput}
+                onChange={e => setSalaryInput(e.target.value)}
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleSalarySave()}
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setShowSalaryModal(false)}>Anuluj</button>
+              <button className={styles.modalSave} onClick={handleSalarySave}>Zapisz</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGoalAdd && topGoal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowGoalAdd(false)}>
+          <div className={styles.modalSheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHandle} />
+            <p className={styles.modalTitle}>{topGoal.icon} {topGoal.name}</p>
+            <p className={styles.modalHint}>Ile odkładasz tym razem?</p>
+            <div className={styles.modalAmountRow}>
+              <span className={styles.modalCurrency}>{currencySymbol}</span>
+              <input
+                className={styles.modalAmountInput}
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={goalAddInput}
+                onChange={e => setGoalAddInput(e.target.value)}
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleGoalAddSave()}
+              />
+            </div>
+            <p className={styles.modalGoalProgress}>
+              Zebrano: {fmt(topGoal.currentAmount)} z {fmt(topGoal.targetAmount)}
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setShowGoalAdd(false)}>Anuluj</button>
+              <button className={styles.modalSave} style={{ background: topGoal.color }} onClick={handleGoalAddSave}>Dodaj</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
