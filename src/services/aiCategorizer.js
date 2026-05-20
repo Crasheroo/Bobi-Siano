@@ -40,27 +40,29 @@ function normalizeCat(raw) {
 function buildPrompt(items) {
   return `Kategoryzuj polskie transakcje bankowe. Każda to opis przelewu lub płatności kartą.
 
-Standardowe kategorie (użyj jeśli pasuje, podaj dokładny identyfikator):
+Standardowe kategorie (użyj jeśli pasuje):
 - food: zakupy spożywcze, sklepy (Biedronka, Lidl, Carrefour itp.)
 - restaurants: restauracje, kawiarnie, fast food, dostawy jedzenia
 - transport: paliwo, parking, autostrady, komunikacja, loty, Uber, Bolt
-- entertainment: kino, gry, bilety, sport widowiskowy
+- entertainment: kino, gry, bilety, sport widowiskowy, kasyna
 - subscriptions: Netflix, Spotify, Apple, Google, subskrypcje cyfrowe
 - shopping: odzież, elektronika, Allegro, Amazon, sklepy non-food
 - health: apteka, lekarz, stomatolog, szpital, drogeria
-- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie
+- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie, składki
 - fitness: siłownia, basen, klub sportowy, MultiSport
 - education: szkoła, kursy, szkolenia, uczelnia, Udemy
 - travel: hotel, Airbnb, wakacje, biuro podróży
-- other: przelewy prywatne, nie pasuje do żadnej powyższej
+- other: przelewy prywatne między osobami, wypłaty z bankomatu
 
-Jeśli transakcja wyraźnie pasuje do nowej, specyficznej kategorii której nie ma na liście (np. zwierzęta, dzieci, kryptowaluty), użyj "NEW" w polu "cat" i podaj nazwę po polsku (max 2 słowa) w polu "label". Nie twórz nowych kategorii dla rzeczy które pasują do powyższych.
+Jeśli transakcja nie pasuje do żadnej powyższej — zawsze wymyśl własną, bardziej precyzyjną kategorię po polsku (max 2 słowa, np. "Zwierzęta", "Dzieci", "Kryptowaluty", "Hazard"). Nie używaj "other" jeśli masz lepszy pomysł.
 
 Transakcje (JSON):
 ${JSON.stringify(items)}
 
-Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po:
-[{"id":0,"cat":"food"},{"id":1,"cat":"NEW","label":"Kryptowaluty"},...]`
+Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po.
+Dla standardowej kategorii: {"id":0,"cat":"food"}
+Dla nowej kategorii:        {"id":1,"cat":"NEW","label":"Zwierzęta"}
+[...]`
 }
 
 async function callGemini(items, apiKey) {
@@ -89,8 +91,10 @@ async function callGemini(items, apiKey) {
 
 /**
  * Categorise transactions whose category is 'other' using Gemini.
- * Returns { cats: {originalIndex: categoryId}, newCats: [{id, label, icon, color}] }
- * where newCats contains AI-invented categories not in the standard list.
+ * Returns {
+ *   cats:    { originalIndex: categoryId },
+ *   newCats: [{ id, label, icon, color }]  — AI-invented categories to save
+ * }
  */
 export async function aiCategorizeTransactions(transactions, apiKey) {
   if (!apiKey?.trim() || !transactions.length) return { cats: {}, newCats: [] }
