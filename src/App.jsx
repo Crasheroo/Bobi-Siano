@@ -107,7 +107,8 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => handleSession(session))
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') useStore.getState().setRecoveryMode(true)
       handleSession(session)
     })
 

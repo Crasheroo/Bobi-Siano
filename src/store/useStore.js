@@ -69,8 +69,10 @@ const useStore = create(
       // === AUTH ===
       user: null,
       syncing: false,
+      recoveryMode: false,
       setUser: (user) => set({ user }),
       setSyncing: (syncing) => set({ syncing }),
+      setRecoveryMode: (v) => set({ recoveryMode: v }),
 
       // === USTAWIENIA ===
       settings: {
@@ -186,6 +188,7 @@ const useStore = create(
     {
       name: 'lucent-storage',
       version: 1,
+      partialize: ({ recoveryMode, setRecoveryMode, ...rest }) => rest,
       onRehydrateStorage: () => (_state, error) => {
         if (error && import.meta.env.DEV) console.error('Failed to rehydrate store:', error)
       },

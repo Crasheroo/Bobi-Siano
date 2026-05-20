@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, CURRENCIES } from '../utils/constants.js'
@@ -34,7 +34,7 @@ const ACCENT_COLORS = [
 export default function Settings() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { settings, setSettings, profile, setProfile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory, clearExpenses, resetStore } = useStore()
+  const { settings, setSettings, profile, setProfile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory, clearExpenses, resetStore, recoveryMode, setRecoveryMode } = useStore()
 
   const theme = settings?.theme || 'dark'
   const accent = settings?.accent || '#0a84ff'
@@ -81,20 +81,11 @@ export default function Settings() {
   const [authLoading, setAuthLoading] = useState(false)
   const [resetSent, setResetSent] = useState(false)
 
-  const [recoveryMode, setRecoveryMode] = useState(false)
   const [recoveryDone, setRecoveryDone] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
   const [recoveryError, setRecoveryError] = useState('')
   const [recoveryLoading, setRecoveryLoading] = useState(false)
-
-  useEffect(() => {
-    if (!supabase) return
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
 
   const clearForm = () => {
     setEmail('')
