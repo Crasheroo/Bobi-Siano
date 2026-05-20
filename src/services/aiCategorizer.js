@@ -1,4 +1,4 @@
-const VALID_CATS = new Set([
+const STANDARD_CATS = new Set([
   'food', 'restaurants', 'transport', 'entertainment', 'subscriptions',
   'shopping', 'health', 'utilities', 'fitness', 'education', 'travel', 'other',
 ])
@@ -30,17 +30,18 @@ function slugify(label) {
     .replace(/ń/g, 'n').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
 }
 
-function normalizeCat(raw) {
+// Returns the standard category ID if it matches, or null if it's a new category name
+function resolveStandardCat(raw) {
   if (!raw) return 'other'
   const s = raw.toLowerCase().trim()
-  if (VALID_CATS.has(s)) return s
-  return CAT_NORMALIZE[s] || 'other'
+  if (STANDARD_CATS.has(s)) return s
+  return CAT_NORMALIZE[s] || null
 }
 
 function buildPrompt(items) {
   return `Kategoryzuj polskie transakcje bankowe. Każda to opis przelewu lub płatności kartą.
 
-Standardowe kategorie (użyj jeśli pasuje):
+Standardowe kategorie (użyj angielskiego ID jeśli pasuje):
 - food: zakupy spożywcze, sklepy (Biedronka, Lidl, Carrefour itp.)
 - restaurants: restauracje, kawiarnie, fast food, dostawy jedzenia
 - transport: paliwo, parking, autostrady, komunikacja, loty, Uber, Bolt
@@ -48,21 +49,19 @@ Standardowe kategorie (użyj jeśli pasuje):
 - subscriptions: Netflix, Spotify, Apple, Google, subskrypcje cyfrowe
 - shopping: odzież, elektronika, Allegro, Amazon, sklepy non-food
 - health: apteka, lekarz, stomatolog, szpital, drogeria
-- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie, składki
+- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie
 - fitness: siłownia, basen, klub sportowy, MultiSport
 - education: szkoła, kursy, szkolenia, uczelnia, Udemy
 - travel: hotel, Airbnb, wakacje, biuro podróży
-- other: przelewy prywatne między osobami, wypłaty z bankomatu
+- other: przelewy prywatne, wypłaty gotówki, nieznane
 
-Jeśli transakcja nie pasuje do żadnej powyższej — zawsze wymyśl własną, bardziej precyzyjną kategorię po polsku (max 2 słowa, np. "Zwierzęta", "Dzieci", "Kryptowaluty", "Hazard"). Nie używaj "other" jeśli masz lepszy pomysł.
+Jeśli żadna nie pasuje — zwróć krótką nazwę kategorii po polsku (max 2 słowa, np. "Zwierzęta", "Dzieci", "Kryptowaluty"). Nie używaj "other" gdy masz lepszy pomysł.
 
 Transakcje (JSON):
 ${JSON.stringify(items)}
 
-Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po.
-Dla standardowej kategorii: {"id":0,"cat":"food"}
-Dla nowej kategorii:        {"id":1,"cat":"NEW","label":"Zwierzęta"}
-[...]`
+Zwróć TYLKO tablicę JSON, bez żadnego tekstu:
+[{"id":0,"cat":"food"},{"id":1,"cat":"Zwierzęta"},...]`
 }
 
 async function callGemini(items, apiKey) {
@@ -91,9 +90,12 @@ async function callGemini(items, apiKey) {
 
 /**
  * Categorise transactions whose category is 'other' using Gemini.
+ * AI maps to standard categories when possible, or returns a Polish name
+ * which becomes a new custom category.
+ *
  * Returns {
  *   cats:    { originalIndex: categoryId },
- *   newCats: [{ id, label, icon, color }]  — AI-invented categories to save
+ *   newCats: [{ id, label, icon, color }]
  * }
  */
 export async function aiCategorizeTransactions(transactions, apiKey) {
@@ -119,21 +121,25 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
     parsed.forEach(r => {
       if (r.id < 0 || r.id >= chunk.length) return
       const txIdx = chunk[r.id].i
+      const raw = (r.cat || r.category || r.kategoria || '').trim()
+      const standard = resolveStandardCat(raw)
 
-      if (r.cat === 'NEW' && r.label?.trim()) {
-        const label = r.label.trim()
-        const slug = slugify(label)
+      if (standard) {
+        cats[txIdx] = standard
+      } else if (raw) {
+        // AI returned a custom Polish category name
+        const slug = slugify(raw)
         if (!newCatsMap[slug]) {
           newCatsMap[slug] = {
             id: slug,
-            label,
+            label: raw.charAt(0).toUpperCase() + raw.slice(1),
             icon: AI_CAT_ICONS[iconIdx++ % AI_CAT_ICONS.length],
             color: AI_CAT_COLORS[colorIdx++ % AI_CAT_COLORS.length],
           }
         }
         cats[txIdx] = slug
       } else {
-        cats[txIdx] = normalizeCat(r.cat || r.category || r.kategoria || '')
+        cats[txIdx] = 'other'
       }
     })
   }
