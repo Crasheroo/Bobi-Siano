@@ -114,7 +114,7 @@ const useStore = create(
       customCategories: [],
       addCustomCategory: (cat) =>
         set((s) => ({
-          customCategories: [...s.customCategories, { ...cat, id: 'custom_' + Date.now() }],
+          customCategories: [...s.customCategories, { ...cat, id: cat.id || 'custom_' + Date.now() }],
         })),
       deleteCustomCategory: (id) =>
         set((s) => ({ customCategories: s.customCategories.filter((c) => c.id !== id) })),

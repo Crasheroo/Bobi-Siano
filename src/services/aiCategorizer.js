@@ -20,6 +20,16 @@ const CAT_NORMALIZE = {
   'inne': 'other', 'nieznane': 'other', 'przelew': 'other',
 }
 
+const AI_CAT_ICONS = ['🏷️', '🎁', '🎮', '💇', '☕', '🎨', '🔧', '🎵', '⚽', '🌿', '👗', '🐾', '💰', '🏠', '🐶', '🧴', '🍕', '🧸', '🚴', '🌊']
+const AI_CAT_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#bf5af2', '#5ac8fa', '#ff6b35', '#ffd60a', '#64d2ff', '#ff375f', '#34c759']
+
+function slugify(label) {
+  return 'ai_' + label.toLowerCase()
+    .replace(/ą/g, 'a').replace(/ę/g, 'e').replace(/ó/g, 'o').replace(/ś/g, 's')
+    .replace(/ł/g, 'l').replace(/ż/g, 'z').replace(/ź/g, 'z').replace(/ć/g, 'c')
+    .replace(/ń/g, 'n').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
 function normalizeCat(raw) {
   if (!raw) return 'other'
   const s = raw.toLowerCase().trim()
@@ -30,7 +40,7 @@ function normalizeCat(raw) {
 function buildPrompt(items) {
   return `Kategoryzuj polskie transakcje bankowe. Każda to opis przelewu lub płatności kartą.
 
-Kategorie (użyj dokładnie tych angielskich identyfikatorów):
+Standardowe kategorie (użyj jeśli pasuje):
 - food: zakupy spożywcze, sklepy (Biedronka, Lidl, Carrefour itp.)
 - restaurants: restauracje, kawiarnie, fast food, dostawy jedzenia
 - transport: paliwo, parking, autostrady, komunikacja, loty, Uber, Bolt
@@ -42,13 +52,17 @@ Kategorie (użyj dokładnie tych angielskich identyfikatorów):
 - fitness: siłownia, basen, klub sportowy, MultiSport
 - education: szkoła, kursy, szkolenia, uczelnia, Udemy
 - travel: hotel, Airbnb, wakacje, biuro podróży
-- other: przelewy prywatne, nie pasuje do powyższych
+- other: przelewy prywatne między osobami, wypłaty z bankomatu
+
+Jeśli transakcja nie pasuje do żadnej powyższej — zawsze wymyśl własną, bardziej precyzyjną kategorię po polsku (max 2 słowa, np. "Zwierzęta", "Dzieci", "Kryptowaluty", "Hazard"). Nie używaj "other" jeśli masz lepszy pomysł.
 
 Transakcje (JSON):
 ${JSON.stringify(items)}
 
-Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po:
-[{"id":0,"cat":"..."},{"id":1,"cat":"..."},...]`
+Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po.
+Dla standardowej kategorii: {"id":0,"cat":"food"}
+Dla nowej kategorii:        {"id":1,"cat":"NEW","label":"Zwierzęta"}
+[...]`
 }
 
 async function callGemini(items, apiKey) {
@@ -77,19 +91,24 @@ async function callGemini(items, apiKey) {
 
 /**
  * Categorise transactions whose category is 'other' using Gemini.
- * Maps only to the 12 standard categories — returns 'other' if nothing fits.
- * Returns {originalIndex: categoryId} for each re-categorised transaction.
+ * Returns {
+ *   cats:    { originalIndex: categoryId },
+ *   newCats: [{ id, label, icon, color }]  — AI-invented categories to save
+ * }
  */
 export async function aiCategorizeTransactions(transactions, apiKey) {
-  if (!apiKey?.trim() || !transactions.length) return {}
+  if (!apiKey?.trim() || !transactions.length) return { cats: {}, newCats: [] }
 
   const toProcess = transactions
     .map((tx, i) => ({ i, tx }))
     .filter(({ tx }) => tx.category === 'other')
 
-  if (!toProcess.length) return { __none: true }
+  if (!toProcess.length) return { cats: {}, newCats: [], __none: true }
 
-  const result = {}
+  const cats = {}
+  const newCatsMap = {}
+  let iconIdx = 0
+  let colorIdx = 0
   const CHUNK = 80
 
   for (let offset = 0; offset < toProcess.length; offset += CHUNK) {
@@ -98,12 +117,26 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
 
     const parsed = await callGemini(items, apiKey)
     parsed.forEach(r => {
-      if (r.id >= 0 && r.id < chunk.length) {
-        const cat = normalizeCat(r.cat || r.category || r.kategoria || '')
-        result[chunk[r.id].i] = cat
+      if (r.id < 0 || r.id >= chunk.length) return
+      const txIdx = chunk[r.id].i
+
+      if (r.cat === 'NEW' && r.label?.trim()) {
+        const label = r.label.trim()
+        const slug = slugify(label)
+        if (!newCatsMap[slug]) {
+          newCatsMap[slug] = {
+            id: slug,
+            label,
+            icon: AI_CAT_ICONS[iconIdx++ % AI_CAT_ICONS.length],
+            color: AI_CAT_COLORS[colorIdx++ % AI_CAT_COLORS.length],
+          }
+        }
+        cats[txIdx] = slug
+      } else {
+        cats[txIdx] = normalizeCat(r.cat || r.category || r.kategoria || '')
       }
     })
   }
 
-  return result
+  return { cats, newCats: Object.values(newCatsMap) }
 }
