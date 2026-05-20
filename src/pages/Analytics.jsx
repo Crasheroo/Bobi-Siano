@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Area, AreaChart
+  PieChart, Pie, Cell, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart
 } from 'recharts'
 import useStore from '../store/useStore.js'
 import { CATEGORIES } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod, formatPeriodLabel } from '../utils/payPeriod.js'
+import { generateSavingsAdvice } from '../services/savingsAdvisor.js'
 import styles from './Analytics.module.css'
 
 const CHART_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#5ac8fa', '#ff6b35', '#5e5ce6', '#34c759', '#ffd60a', '#64d2ff', '#98989e']
@@ -17,9 +18,9 @@ export default function Analytics() {
   const navigate = useNavigate()
   const t = useTranslation()
   const formatAmount = useFormatCurrency()
-  const { expenses, customCategories, getMonthlyRecurringTotal, getSalaryForMonth, profile } = useStore()
+  const { expenses, customCategories, goals, getMonthlyRecurringTotal, getSalaryForMonth, profile } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
-  const [activeTab, setActiveTab] = useState('categories')
+  const [activeTab, setActiveTab] = useState('advice')
   const now = new Date()
 
   const salaryDay = profile?.salaryDay ?? 1
@@ -46,30 +47,36 @@ export default function Analytics() {
   const last6Months = useMemo(() => {
     const result = []
     for (let i = 5; i >= 0; i--) {
-      const d = new Date()
-      d.setMonth(d.getMonth() - i)
-      const m = d.getMonth()
-      const y = d.getFullYear()
-      const monthExp = expenses.filter((e) => {
-        const ed = new Date(e.date)
-        return ed.getMonth() === m && ed.getFullYear() === y
+      const ref = new Date()
+      ref.setMonth(ref.getMonth() - i)
+      const period = getPayPeriod(ref, salaryDay)
+      const periodExp = expenses.filter(e => {
+        const d = new Date(e.date)
+        return d >= period.start && d <= period.end
       })
-      const total = monthExp.reduce((s, e) => s + e.amount, 0)
+      const total = periodExp.reduce((s, e) => s + e.amount, 0)
+      const py = period.start.getFullYear()
+      const pm = period.start.getMonth()
       result.push({
-        month: t.monthsShort[m],
+        month: t.monthsShort[pm],
         wydatki: Math.round(total),
-        budzet: Math.round(getSalaryForMonth(y, m)),
+        budzet: Math.round(getSalaryForMonth(py, pm)),
       })
     }
     return result
-  }, [expenses, getSalaryForMonth, t.monthsShort])
+  }, [expenses, getSalaryForMonth, salaryDay, t.monthsShort])
 
   const recurringTotal = getMonthlyRecurringTotal()
   const expensesTotal = monthExpenses.reduce((s, e) => s + e.amount, 0)
   const totalSpent = expensesTotal + recurringTotal
-  const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
+  const currentSalary = getSalaryForMonth(payPeriod.start.getFullYear(), payPeriod.start.getMonth())
   const saved = currentSalary - totalSpent
   const savingRate = currentSalary > 0 ? (saved / currentSalary) * 100 : 0
+
+  const savingsAdvice = useMemo(() =>
+    generateSavingsAdvice({ expenses, salary: currentSalary, goals: goals || [], recurringTotal }),
+    [expenses, currentSalary, goals, recurringTotal]
+  )
 
   const budgetData = [
     { name: t.analytics.recurringPayments, value: Math.round(recurringTotal), color: '#5e5ce6' },
@@ -132,9 +139,9 @@ export default function Analytics() {
       {/* Tabs */}
       <div className={styles.tabs}>
         {[
+          { id: 'advice',     label: 'Porady' },
           { id: 'categories', label: t.analytics.tabCategories },
-          { id: 'trend', label: t.analytics.tabTrend },
-          { id: 'budget', label: t.analytics.tabBudget },
+          { id: 'trend',      label: t.analytics.tabTrend },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -202,33 +209,113 @@ export default function Analytics() {
         </div>
       )}
 
-      {activeTab === 'budget' && (
+      {activeTab === 'advice' && (
         <div className={styles.chartSection}>
-          <p className={styles.chartTitle}>{t.analytics.budgetTitle}</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={budgetData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
-                {budgetData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className={styles.budgetBreakdown}>
-            {budgetData.map((item, i) => (
-              <div key={i} className={styles.budgetRow}>
-                <div className={styles.budgetDot} style={{ background: item.color }} />
-                <span className={styles.budgetName}>{item.name}</span>
-                <span className={styles.budgetVal}>{formatAmount(item.value)}</span>
-                <span className={styles.budgetPct}>
-                  {currentSalary > 0 ? ((item.value / currentSalary) * 100).toFixed(0) : 0}%
-                </span>
+          {!savingsAdvice ? (
+            <div className={styles.empty}>
+              <span>📊</span>
+              <p>Potrzebujesz przynajmniej 1 pełny miesiąc danych historycznych</p>
+            </div>
+          ) : (
+            <>
+              {/* Summary */}
+              <div className={styles.adviceSummary}>
+                <div>
+                  <p className={styles.adviceSummaryLabel}>Możesz zaoszczędzić</p>
+                  <p className={styles.adviceSummaryAmount}>
+                    {formatAmount(savingsAdvice.totalPotentialMonthly)}
+                    <span className={styles.adviceSummaryUnit}>/mies.</span>
+                  </p>
+                  <p className={styles.adviceSummaryYear}>to {formatAmount(savingsAdvice.totalPotentialAnnual)} rocznie</p>
+                </div>
+                <div className={styles.adviceSummaryRight}>
+                  <p className={styles.adviceSummaryMeta}>na podstawie</p>
+                  <p className={styles.adviceSummaryMonths}>{savingsAdvice.monthCount}</p>
+                  <p className={styles.adviceSummaryMeta}>{savingsAdvice.monthCount === 1 ? 'miesiąca' : 'miesięcy'}</p>
+                </div>
               </div>
-            ))}
-          </div>
+
+              {/* Recommendations */}
+              {savingsAdvice.recommendations.length === 0 ? (
+                <div className={styles.adviceAllGood}>
+                  <span>✅</span>
+                  <p>Twoje wydatki są w normie we wszystkich kategoriach!</p>
+                </div>
+              ) : (
+                savingsAdvice.recommendations.map((rec) => {
+                  const cat = allCategories.find(c => c.id === rec.catId)
+                  if (!cat) return null
+                  const statusColor = rec.overBenchmark ? '#ff453a' : '#ff9f0a'
+                  return (
+                    <div key={rec.catId} className={styles.adviceCard} style={{ borderLeftColor: statusColor }}>
+                      <div className={styles.adviceCardHeader}>
+                        <div className={styles.adviceCardIcon} style={{ background: cat.color + '22' }}>{cat.icon}</div>
+                        <div className={styles.adviceCardMeta}>
+                          <span className={styles.adviceCardName}>{cat.label}</span>
+                          <span className={styles.adviceCardAmount}>{formatAmount(rec.median)}/mies.</span>
+                        </div>
+                        <span className={styles.adviceBadge} style={{ background: statusColor + '22', color: statusColor }}>
+                          {(rec.pctOfSalary * 100).toFixed(0)}% wypłaty
+                        </span>
+                      </div>
+                      {rec.overBenchmark && (
+                        <p className={styles.adviceOverLimit}>
+                          ⚠ Wydajesz {formatAmount(rec.median - rec.benchmarkAmt)} powyżej rekomendowanego limitu ({formatAmount(rec.benchmarkAmt)}/mies.)
+                        </p>
+                      )}
+                      <div className={styles.adviceSavingsRow}>
+                        <span className={styles.adviceSavingsArrow}>→</span>
+                        <span className={styles.adviceSavingsText}>
+                          Potencjalna oszczędność:{' '}
+                          <strong>{formatAmount(rec.savingsMonthly)}/mies.</strong>
+                          {' · '}
+                          <strong>{formatAmount(rec.savingsAnnual)}/rok</strong>
+                        </span>
+                      </div>
+                      {rec.tips.length > 0 && (
+                        <ul className={styles.adviceTips}>
+                          {rec.tips.map((tip, i) => <li key={i}>{tip}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+
+              {/* Goal simulations */}
+              {savingsAdvice.goalSims.length > 0 && (
+                <div className={styles.adviceGoalsSection}>
+                  <p className={styles.adviceSectionTitle}>Przyspieszenie celów</p>
+                  {savingsAdvice.goalSims.map(g => (
+                    <div key={g.id} className={styles.adviceGoalRow}>
+                      <p className={styles.adviceGoalName}>{g.name}</p>
+                      <div className={styles.adviceGoalTimes}>
+                        <div className={styles.adviceGoalTime}>
+                          <span className={styles.adviceGoalTimeVal} style={{ color: 'var(--text-tertiary)' }}>
+                            {g.monthsNow != null ? `${g.monthsNow} mies.` : '—'}
+                          </span>
+                          <span className={styles.adviceGoalTimeLabel}>teraz</span>
+                        </div>
+                        <span className={styles.adviceGoalArrow}>→</span>
+                        <div className={styles.adviceGoalTime}>
+                          <span className={styles.adviceGoalTimeVal} style={{ color: '#30d158' }}>
+                            {g.monthsOpt != null ? `${g.monthsOpt} mies.` : '—'}
+                          </span>
+                          <span className={styles.adviceGoalTimeLabel}>po optymalizacji</span>
+                        </div>
+                        {g.monthsSaved != null && g.monthsSaved > 0 && (
+                          <span className={styles.adviceGoalSaved}>−{g.monthsSaved} mies.</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
+
     </div>
   )
 }

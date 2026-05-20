@@ -1,16 +1,18 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
+import { getPayPeriod } from '../utils/payPeriod.js'
+import UndoToast from '../components/UndoToast.jsx'
 import styles from './Expenses.module.css'
 
 export default function Expenses() {
   const navigate = useNavigate()
   const t = useTranslation()
   const formatAmount = useFormatCurrency()
-  const { expenses, deleteExpense, editExpense, customCategories } = useStore()
+  const { expenses, addExpense, deleteExpense, editExpense, customCategories, profile } = useStore()
   const allCategories = [...CATEGORIES, ...customCategories]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
   const [search, setSearch] = useState('')
@@ -21,6 +23,10 @@ export default function Expenses() {
   const [editDesc, setEditDesc] = useState('')
   const [editCategory, setEditCategory] = useState('')
   const [editDate, setEditDate] = useState('')
+  const [filterMonth, setFilterMonth] = useState('current')
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const now = new Date()
+  const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
   const openEdit = (e) => {
     setEditingExpense(e)
@@ -42,13 +48,41 @@ export default function Expenses() {
     setEditingExpense(null)
   }
 
+  const handleDeleteWithUndo = useCallback((expense) => {
+    setPendingDelete(expense)
+    setSwipedId(null)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (pendingDelete) deleteExpense(pendingDelete.id)
+    setPendingDelete(null)
+  }, [pendingDelete, deleteExpense])
+
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null)
+  }, [])
+
+  const handleDuplicate = () => {
+    addExpense({
+      amount: editingExpense.amount,
+      description: editingExpense.description,
+      category: editingExpense.category,
+      date: new Date().toISOString(),
+    })
+    setEditingExpense(null)
+  }
+
   const filtered = useMemo(() => {
     return expenses.filter((e) => {
       const matchesSearch = !search || e.description?.toLowerCase().includes(search.toLowerCase())
       const matchesCat = filterCat === 'all' || e.category === filterCat
-      return matchesSearch && matchesCat
+      const matchesMonth = filterMonth === 'all' || (() => {
+        const d = new Date(e.date)
+        return d >= payPeriod.start && d <= payPeriod.end
+      })()
+      return matchesSearch && matchesCat && matchesMonth
     })
-  }, [expenses, search, filterCat])
+  }, [expenses, search, filterCat, filterMonth])
 
   const groupedByDate = useMemo(() => {
     const groups = {}
@@ -56,8 +90,9 @@ export default function Expenses() {
       const d = new Date(e.date)
       if (isNaN(d.getTime())) return
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-      if (!groups[key]) groups[key] = { label: formatDate(e.date), items: [] }
+      if (!groups[key]) groups[key] = { label: formatDate(e.date), items: [], total: 0 }
       groups[key].items.push(e)
+      groups[key].total += e.amount
     })
     return Object.values(groups).sort((a, b) => new Date(b.items[0].date) - new Date(a.items[0].date))
   }, [filtered])
@@ -107,6 +142,15 @@ export default function Expenses() {
         )}
       </div>
 
+      <div className={styles.monthToggleRow}>
+        <button
+          className={`${styles.monthToggleBtn} ${filterMonth === 'current' ? styles.monthToggleActive : ''}`}
+          onClick={() => setFilterMonth(filterMonth === 'current' ? 'all' : 'current')}
+        >
+          {filterMonth === 'current' ? '📅 Bieżący miesiąc ✕' : '📅 Bieżący miesiąc'}
+        </button>
+      </div>
+
       <div className={styles.filters}>
         <button
           className={`${styles.filterBtn} ${filterCat === 'all' ? styles.filterBtnActive : ''}`}
@@ -137,13 +181,19 @@ export default function Expenses() {
       <div className={styles.list}>
         {groupedByDate.length === 0 ? (
           <div className={styles.empty}>
-            <span>🔍</span>
-            <p>{t.expenses.noExpenses}</p>
+            <span>🧾</span>
+            <p>{filterMonth === 'current' ? 'Brak wydatków w bieżącym okresie' : 'Nie masz jeszcze żadnych wydatków'}</p>
+            <button className={styles.emptyAction} onClick={() => navigate('/add-expense')}>
+              + Dodaj pierwszy wydatek
+            </button>
           </div>
         ) : (
           groupedByDate.map((group, gi) => (
             <div key={gi} className={styles.group}>
-              <p className={styles.groupLabel}>{group.label}</p>
+              <div className={styles.groupHeader}>
+                <p className={styles.groupLabel}>{group.label}</p>
+                <p className={styles.groupTotal}>-{formatAmount(group.total)}</p>
+              </div>
               <div className={styles.groupItems}>
                 {group.items.map((e) => {
                   const cat = getCat(e.category)
@@ -174,8 +224,7 @@ export default function Expenses() {
                               className={styles.deleteBtn}
                               onClick={(ev) => {
                                 ev.stopPropagation()
-                                deleteExpense(e.id)
-                                setSwipedId(null)
+                                handleDeleteWithUndo(e)
                               }}
                             >
                               {t.common.delete}
@@ -247,11 +296,20 @@ export default function Expenses() {
             </div>
 
             <div className={styles.editActions}>
+              <button className={styles.duplicateBtn} onClick={handleDuplicate}>Duplikuj</button>
               <button className={styles.editSaveBtn} onClick={saveEdit}>{t.common.save}</button>
               <button className={styles.editCancelBtn} onClick={() => setEditingExpense(null)}>{t.common.cancel}</button>
             </div>
           </div>
         </div>
+      )}
+
+      {pendingDelete && (
+        <UndoToast
+          message={`Usunięto: ${pendingDelete.description || getCat(pendingDelete.category)?.label}`}
+          onUndo={cancelDelete}
+          onDismiss={confirmDelete}
+        />
       )}
     </div>
   )

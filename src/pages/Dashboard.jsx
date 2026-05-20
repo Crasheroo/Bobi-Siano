@@ -1,32 +1,41 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
-import { CATEGORIES, formatDate } from '../utils/constants.js'
+import { CATEGORIES, CURRENCIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod } from '../utils/payPeriod.js'
+import QuickAddModal from '../components/QuickAddModal.jsx'
+import OnboardingChecklist from '../components/OnboardingChecklist.jsx'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { profile, expenses, recurring, goals, monthlySalaries, customCategories,
           categoryBudgets, getCurrentMonthExpenses, getMonthlyRecurringTotal,
-          getSalaryForMonth, setMonthlySalary } = useStore()
+          getSalaryForMonth, setMonthlySalary, addToGoal, settings } = useStore()
   const t = useTranslation()
   const fmt = useFormatCurrency()
+  const currencySymbol = CURRENCIES.find(c => c.code === (settings?.currency || 'PLN'))?.symbol || 'zł'
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const getCat = (id) => allCategories.find((c) => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 
-  const [editingSalary, setEditingSalary] = useState(false)
+  const [showSalaryModal, setShowSalaryModal] = useState(false)
   const [salaryInput, setSalaryInput] = useState('')
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const [showGoalAdd, setShowGoalAdd] = useState(false)
+  const [goalAddInput, setGoalAddInput] = useState('')
 
   const now = new Date()
   const monthName = t.months[now.getMonth()]
   const payPeriod = getPayPeriod(now, profile?.salaryDay ?? 1)
 
-  const currentSalary = getSalaryForMonth(now.getFullYear(), now.getMonth())
+  const periodYear  = payPeriod.start.getFullYear()
+  const periodMonth = payPeriod.start.getMonth()
+
+  const currentSalary = getSalaryForMonth(periodYear, periodMonth)
   const salarySetThisMonth = (monthlySalaries || []).some(
-    (ms) => ms.year === now.getFullYear() && ms.month === now.getMonth()
+    (ms) => ms.year === periodYear && ms.month === periodMonth
   )
 
   // Use pay period expenses (respects salary day)
@@ -44,23 +53,30 @@ export default function Dashboard() {
   const savingsRate    = currentSalary > 0 ? ((remaining / currentSalary) * 100) : 0
   const spentPercent   = currentSalary > 0 ? Math.min((totalSpent / currentSalary) * 100, 100) : 0
 
-  // ── Month-end spending forecast ──────────────────────────────────────
-  const forecast = useMemo(() => {
-    const dayOfMonth  = now.getDate()
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    if (dayOfMonth < 5 || monthExpenses.length === 0) return null
+  const statusBanner = useMemo(() => {
+    if (currentSalary === 0) return null
+    if (spentPercent >= 100)
+      return { text: `Budżet przekroczony o ${fmt(Math.abs(remaining))} — czas zacisnąć pasa`, color: '#ff453a', bg: 'rgba(255,69,58,0.12)' }
+    if (spentPercent >= 85)
+      return { text: `Zostało tylko ${fmt(remaining)} — ostrożnie z wydatkami`, color: '#ff9f0a', bg: 'rgba(255,159,10,0.12)' }
+    if (spentPercent >= 70)
+      return { text: `Wydałeś ${spentPercent.toFixed(0)}% budżetu — miej oko na wydatki`, color: '#ff9f0a', bg: 'rgba(255,159,10,0.12)' }
+    if (savingsRate >= 20)
+      return { text: `Świetnie! Oszczędzasz ${savingsRate.toFixed(0)}% wypłaty — tak trzymaj`, color: '#30d158', bg: 'rgba(48,209,88,0.1)' }
+    return { text: `Na razie w porządku — ${fmt(remaining)} do dyspozycji`, color: '#30d158', bg: 'rgba(48,209,88,0.08)' }
+  }, [currentSalary, spentPercent, remaining, savingsRate, fmt])
 
-    // Use calendar-month expenses for the forecast (not pay period)
-    const calMonthExpenses = expenses.filter(e => {
-      const d = new Date(e.date)
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
-    const calTotal = calMonthExpenses.reduce((s, e) => s + e.amount, 0)
-    const dailyAvg = calTotal / dayOfMonth
-    const projected = Math.round(dailyAvg * daysInMonth)
-    const diff = projected - currentSalary
-    return { projected, diff, dailyAvg }
-  }, [expenses, now, currentSalary, monthExpenses.length])
+  // ── Pay-period-end spending forecast ────────────────────────────────
+  const forecast = useMemo(() => {
+    const periodDays  = Math.round((payPeriod.end - payPeriod.start) / 86_400_000) + 1
+    const elapsedDays = Math.max(1, Math.round((now - payPeriod.start) / 86_400_000) + 1)
+    if (elapsedDays < 5 || monthExpenses.length === 0) return null
+
+    const dailyAvg  = expensesTotal / elapsedDays
+    const projected = Math.round(dailyAvg * periodDays)
+    const diff      = projected - currentSalary
+    return { projected, diff }
+  }, [payPeriod.start, payPeriod.end, expensesTotal, currentSalary, monthExpenses.length])
 
   // ── Budget widget: categories near/over limit ────────────────────────
   const budgetAlerts = useMemo(() => {
@@ -82,13 +98,22 @@ export default function Dashboard() {
 
   const handleSalarySave = () => {
     const val = Number(salaryInput)
-    if (!isNaN(val) && val >= 0) setMonthlySalary(now.getFullYear(), now.getMonth(), val)
-    setEditingSalary(false)
+    if (!isNaN(val) && val >= 0) setMonthlySalary(periodYear, periodMonth, val)
+    setShowSalaryModal(false)
     setSalaryInput('')
+  }
+
+  const handleGoalAddSave = () => {
+    const val = Number(goalAddInput)
+    if (!isNaN(val) && val > 0 && topGoal) addToGoal(topGoal.id, val)
+    setShowGoalAdd(false)
+    setGoalAddInput('')
   }
 
   const recentExpenses = useMemo(() => [...expenses].slice(0, 5), [expenses])
   const activeGoals    = (goals || []).filter(g => g.currentAmount < g.targetAmount)
+
+  const onboardingDone = salarySetThisMonth && expenses.length > 0 && (goals || []).length > 0
   const topGoal        = activeGoals[0] || null
   const topGoalPct     = topGoal ? Math.min((topGoal.currentAmount / topGoal.targetAmount) * 100, 100) : 0
 
@@ -132,33 +157,16 @@ export default function Dashboard() {
         </div>
         <div className={styles.balanceMeta}>
           <span>{t.dashboard.spent}: {fmt(totalSpent)}</span>
-          {editingSalary ? (
-            <span className={styles.salaryEditRow}>
-              <input
-                className={styles.salaryEditInput}
-                type="number"
-                inputMode="decimal"
-                value={salaryInput}
-                onChange={(e) => setSalaryInput(e.target.value)}
-                onBlur={handleSalarySave}
-                onKeyDown={(e) => e.key === 'Enter' && handleSalarySave()}
-                autoFocus
-                placeholder={currentSalary}
-              />
-              <button className={styles.salaryEditSave} onMouseDown={handleSalarySave}>✓</button>
-            </span>
-          ) : (
-            <button
-              className={salarySetThisMonth ? styles.salaryBtn : styles.salaryBtnNew}
-              onClick={() => { setSalaryInput(String(currentSalary)); setEditingSalary(true) }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 5, flexShrink: 0 }}>
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${fmt(currentSalary)}` : t.dashboard.enterSalary}
-            </button>
-          )}
+          <button
+            className={salarySetThisMonth ? styles.salaryBtn : styles.salaryBtnNew}
+            onClick={() => { setSalaryInput(String(currentSalary || '')); setShowSalaryModal(true) }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: 5, flexShrink: 0 }}>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {salarySetThisMonth ? `${t.dashboard.salaryPrefix}: ${fmt(currentSalary)}` : t.dashboard.enterSalary}
+          </button>
         </div>
 
         {/* Forecast row */}
@@ -179,6 +187,22 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Onboarding checklist */}
+      {!onboardingDone && (
+        <OnboardingChecklist
+          hasSalary={salarySetThisMonth}
+          hasExpense={expenses.length > 0}
+          hasGoal={(goals || []).length > 0}
+        />
+      )}
+
+      {/* Status banner */}
+      {statusBanner && (
+        <div className={styles.statusBanner} style={{ background: statusBanner.bg, color: statusBanner.color }}>
+          {statusBanner.text}
+        </div>
+      )}
 
       {/* Quick stats */}
       <div className={styles.statsRow}>
@@ -238,7 +262,7 @@ export default function Dashboard() {
       ) : null}
 
       {/* Quick add */}
-      <button className={styles.addBtn} onClick={() => navigate('/add-expense')}>
+      <button className={styles.addBtn} onClick={() => setShowQuickAdd(true)}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -265,11 +289,20 @@ export default function Dashboard() {
           <div className={styles.goalWidgetTrack}>
             <div className={styles.goalWidgetFill} style={{ width: `${topGoalPct}%`, background: topGoal.color }} />
           </div>
-          {remaining > 0 && (
-            <p className={styles.goalWidgetCapacity}>
-              {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{fmt(remaining)}</strong>
-            </p>
-          )}
+          <div className={styles.goalWidgetFooter}>
+            {remaining > 0 ? (
+              <p className={styles.goalWidgetCapacity}>
+                {t.dashboard.canSaveThisMonth} <strong style={{ color: '#30d158' }}>{fmt(remaining)}</strong>
+              </p>
+            ) : <span />}
+            <button
+              className={styles.goalAddBtn}
+              style={{ borderColor: topGoal.color + '66', color: topGoal.color }}
+              onClick={e => { e.stopPropagation(); setGoalAddInput(''); setShowGoalAdd(true) }}
+            >
+              + Odkładam
+            </button>
+          </div>
         </div>
       ) : (
         <button className={styles.goalWidgetEmpty} onClick={() => navigate('/goals')}>
@@ -311,6 +344,64 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      {showQuickAdd && <QuickAddModal onClose={() => setShowQuickAdd(false)} />}
+
+      {showSalaryModal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowSalaryModal(false)}>
+          <div className={styles.modalSheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHandle} />
+            <p className={styles.modalTitle}>Wypłata — {monthName}</p>
+            <p className={styles.modalHint}>Wpisz całość: podstawa + premie + nadgodziny</p>
+            <div className={styles.modalAmountRow}>
+              <span className={styles.modalCurrency}>{currencySymbol}</span>
+              <input
+                className={styles.modalAmountInput}
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={salaryInput}
+                onChange={e => setSalaryInput(e.target.value)}
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleSalarySave()}
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setShowSalaryModal(false)}>Anuluj</button>
+              <button className={styles.modalSave} onClick={handleSalarySave}>Zapisz</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGoalAdd && topGoal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowGoalAdd(false)}>
+          <div className={styles.modalSheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHandle} />
+            <p className={styles.modalTitle}>{topGoal.icon} {topGoal.name}</p>
+            <p className={styles.modalHint}>Ile odkładasz tym razem?</p>
+            <div className={styles.modalAmountRow}>
+              <span className={styles.modalCurrency}>{currencySymbol}</span>
+              <input
+                className={styles.modalAmountInput}
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={goalAddInput}
+                onChange={e => setGoalAddInput(e.target.value)}
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleGoalAddSave()}
+              />
+            </div>
+            <p className={styles.modalGoalProgress}>
+              Zebrano: {fmt(topGoal.currentAmount)} z {fmt(topGoal.targetAmount)}
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setShowGoalAdd(false)}>Anuluj</button>
+              <button className={styles.modalSave} style={{ background: topGoal.color }} onClick={handleGoalAddSave}>Dodaj</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

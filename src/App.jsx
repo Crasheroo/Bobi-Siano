@@ -62,7 +62,10 @@ export default function App() {
     const handleSession = async (session) => {
       if (!session?.user) {
         clearTimeout(syncTimerRef.current)
-        useStore.getState().resetStore()
+        // Only wipe data on explicit logout — not when simply not logged in
+        if (useStore.getState().user) {
+          useStore.getState().resetStore()
+        }
         return
       }
 
@@ -94,7 +97,7 @@ export default function App() {
           await uploadUserData(su.id, extractSyncData(state))
         }
       } catch (e) {
-        console.error('Sync error:', e)
+        if (import.meta.env.DEV) console.error('Sync error:', e)
         setSyncError(true)
       }
       setSyncing(false)
@@ -108,17 +111,25 @@ export default function App() {
       handleSession(session)
     })
 
+    const uploadWithRetry = async (uid, data, attempt = 0) => {
+      try {
+        await uploadUserData(uid, data)
+        setSyncError(false)
+      } catch {
+        if (attempt < 3) {
+          setTimeout(() => uploadWithRetry(uid, data, attempt + 1), 2000 * 2 ** attempt)
+        } else {
+          setSyncError(true)
+        }
+      }
+    }
+
     // Push local changes to cloud (debounced 5s)
     const unsubStore = useStore.subscribe((state) => {
       if (!state.user) return
       clearTimeout(syncTimerRef.current)
-      syncTimerRef.current = setTimeout(async () => {
-        try {
-          await uploadUserData(state.user.uid, extractSyncData(state))
-          setSyncError(false)
-        } catch {
-          setSyncError(true)
-        }
+      syncTimerRef.current = setTimeout(() => {
+        uploadWithRetry(state.user.uid, extractSyncData(state))
       }, 5000)
     })
 

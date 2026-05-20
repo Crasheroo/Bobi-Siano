@@ -5,18 +5,21 @@ import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { parseBank, readFileAsText } from '../services/bankParser.js'
+import { aiCategorizeTransactions } from '../services/aiCategorizer.js'
 import styles from './Import.module.css'
 
 export default function Import() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { addExpense, customCategories, expenses } = useStore()
+  const { addExpense, customCategories, addCustomCategory, expenses, settings } = useStore()
   const formatAmount = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const fileRef = useRef(null)
 
   const [step, setStep] = useState('upload') // upload | preview | success
   const [parsing, setParsing] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiStatus, setAiStatus] = useState('') // '' | 'ok:N' | 'error:msg' | 'nokey'
   const [error, setError] = useState('')
   const [transactions, setTransactions] = useState([])
   const [selected, setSelected] = useState({})
@@ -40,7 +43,6 @@ export default function Import() {
       }
       const sel = {}, catMap = {}
       parsed.forEach((tx, i) => {
-        // Auto-deselect internal transfers (savings goals, own-account moves)
         sel[i] = tx.isExpense && !tx.isInternal
         catMap[i] = tx.category
       })
@@ -48,6 +50,35 @@ export default function Import() {
       setSelected(sel)
       setCats(catMap)
       setStep('preview')
+      setParsing(false)
+
+      // AI categorisation runs after preview is shown — non-blocking
+      const apiKey = settings?.geminiApiKey
+      if (!apiKey) {
+        setAiStatus('nokey')
+        return
+      }
+      const otherCount = parsed.filter(tx => tx.category === 'other').length
+      setAiLoading(true)
+      setAiStatus(`loading:${otherCount}`)
+      try {
+        const { cats: aiCats, newCats, __none } = await aiCategorizeTransactions(parsed, apiKey)
+        if (__none) {
+          setAiStatus('none')
+        } else {
+          const existingIds = new Set((customCategories || []).map(c => c.id))
+          for (const cat of newCats) {
+            if (!existingIds.has(cat.id)) addCustomCategory(cat)
+          }
+          const count = Object.keys(aiCats).length
+          if (count > 0) setCats(prev => ({ ...prev, ...aiCats }))
+          setAiStatus(`ok:${count}`)
+        }
+      } catch (e) {
+        setAiStatus(`error:${e?.message || 'Błąd API'}`)
+      }
+      setAiLoading(false)
+      return
     } catch (e) {
       setError(t.import.errorRead(e?.message || 'Spróbuj ponownie'))
     }
@@ -76,7 +107,9 @@ export default function Import() {
 
   const toggleAll = (val) => {
     const next = { ...selected }
-    visible.forEach(({ _i }) => { next[_i] = val })
+    visible.forEach((tx) => {
+      if (tx.isExpense && !tx.isInternal) next[tx._i] = val
+    })
     setSelected(next)
   }
 
@@ -92,6 +125,7 @@ export default function Import() {
     const importedDates = []
     transactions.forEach((tx, i) => {
       if (!selected[i]) return
+      if (!tx.isExpense || tx.isInternal) return
       if (isDuplicate(tx)) { skipped++; return }
       addExpense({
         amount: tx.amount,
@@ -224,7 +258,25 @@ export default function Import() {
         </button>
         <div>
           <h1 className={styles.title}>{t.import.previewTitle}</h1>
-          <p className={styles.subtitle}>{t.import.previewSub}</p>
+          {aiLoading ? (
+            <p className={styles.subtitle} style={{ color: 'var(--accent-blue)' }}>
+              ✨ AI kategoryzuje {aiStatus.startsWith('loading:') ? aiStatus.slice(8) : ''}...
+            </p>
+          ) : aiStatus.startsWith('ok:') ? (
+            <p className={styles.subtitle} style={{ color: '#30d158' }}>
+              ✓ AI poprawiło {aiStatus.slice(3)} kategorii
+            </p>
+          ) : aiStatus.startsWith('error:') ? (
+            <p className={styles.subtitle} style={{ color: '#ff453a' }}>
+              AI błąd: {aiStatus.slice(6)}
+            </p>
+          ) : aiStatus === 'none' ? (
+            <p className={styles.subtitle} style={{ color: 'var(--text-tertiary)' }}>AI: brak transakcji "inne" do kategoryzacji</p>
+          ) : aiStatus === 'nokey' ? (
+            <p className={styles.subtitle}>{t.import.previewSub} · <span style={{ color: 'var(--text-tertiary)' }}>bez AI (brak klucza)</span></p>
+          ) : (
+            <p className={styles.subtitle}>{t.import.previewSub}</p>
+          )}
         </div>
         <div style={{ width: 36 }} />
       </div>
@@ -266,21 +318,27 @@ export default function Import() {
         ) : (
           visible.map((tx) => {
             const cat = getCat(cats[tx._i])
+            const isIncome = !tx.isExpense
             const isChecked = !!selected[tx._i]
             const dup = isDuplicate(tx)
             return (
               <div
                 key={tx._i}
-                className={`${styles.txRow} ${!isChecked ? styles.txRowDimmed : ''}`}
-                onClick={() => setSelected((s) => ({ ...s, [tx._i]: !s[tx._i] }))}
+                className={`${styles.txRow} ${isIncome ? styles.txRowIncome : !isChecked ? styles.txRowDimmed : ''}`}
+                onClick={isIncome ? undefined : () => setSelected((s) => ({ ...s, [tx._i]: !s[tx._i] }))}
+                style={isIncome ? { cursor: 'default' } : undefined}
               >
-                <div className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ''}`}>
-                  {isChecked && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <polyline points="20 6 9 17 4 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </div>
+                {isIncome ? (
+                  <div className={styles.incomeBadge}>↓</div>
+                ) : (
+                  <div className={`${styles.checkbox} ${isChecked ? styles.checkboxChecked : ''}`}>
+                    {isChecked && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <polyline points="20 6 9 17 4 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.txCatBadge} style={{ background: cat.color + '22' }}>
                   <span>{cat.icon}</span>
@@ -291,26 +349,29 @@ export default function Import() {
                   <p className={styles.txDate}>
                     {formatDate(tx.date)}
                     {dup && <span style={{ color: 'var(--text-tertiary)', marginLeft: 6, fontSize: 11 }}>duplikat</span>}
+                    {isIncome && <span style={{ color: '#30d158', marginLeft: 6, fontSize: 11 }}>przychód</span>}
                   </p>
                 </div>
 
                 <div className={styles.txRight}>
-                  <p className={styles.txAmount} style={{ color: tx.isExpense ? '#ff453a' : '#30d158' }}>
-                    {tx.isExpense ? '-' : '+'}{formatAmount(tx.amount)}
+                  <p className={styles.txAmount} style={{ color: isIncome ? '#30d158' : '#ff453a' }}>
+                    {isIncome ? '+' : '-'}{formatAmount(tx.amount)}
                   </p>
-                  <select
-                    className={styles.catSelect}
-                    value={cats[tx._i] || 'other'}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      setCats((c) => ({ ...c, [tx._i]: e.target.value }))
-                    }}
-                  >
-                    {allCategories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
-                    ))}
-                  </select>
+                  {!isIncome && (
+                    <select
+                      className={styles.catSelect}
+                      value={cats[tx._i] || 'other'}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        setCats((c) => ({ ...c, [tx._i]: e.target.value }))
+                      }}
+                    >
+                      {allCategories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             )

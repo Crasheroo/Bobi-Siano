@@ -184,7 +184,20 @@ const MBANK_CAT_MAP = {
   'wyjscia i wydarzenia':       'entertainment',
   'podroze i wyjazdy':          'travel',
   'sport i rekreacja':          'fitness',
+  'sport i hobby':              'fitness',
   'edukacja':                   'education',
+  'szkola i wyprawka':          'education',
+  'czynsz i wynajem':           'utilities',
+  'oplaty i odsetki':           'utilities',
+  'remont i ogrod':             'shopping',
+  'zwierzeta':                  'other',
+  'splaty rat':                 'other',
+  'wyplata gotowki':            'other',
+  'platnosci - inne':           'other',
+  'firmowe - inne':             'other',
+  'podatki':                    'other',
+  'osobiste - inne':            'other',
+  'wynagrodzenie':              'other',
   'regularne oszczedzanie':     'other',
   'przelew wlasny':             'other',
   'bez kategorii':              'other',
@@ -205,11 +218,16 @@ function parseMbank(lines) {
   if (hi === -1) return null
 
   // Detect column positions from header labels — robust against format variants
+  // Two common mBank export formats:
+  //   New (with categories): #Data operacji; #Opis operacji; #Kategoria; #Kwota; ...
+  //   Classic (no categories): #Data operacji; #Data księgowania; #Opis operacji; #Tytuł; #Nadawca/Odbiorca; #Numer konta; #Kwota; #Saldo
   const headerCols = splitLine(lines[hi], ';').map(clean)
-  const iDate = headerCols.findIndex(h => h.includes('Data operacji'))
-  const iDesc = headerCols.findIndex(h => h.includes('Opis operacji'))
-  const iCat  = headerCols.findIndex(h => h.includes('Kategoria'))
-  const iAmt  = headerCols.findIndex(h => h.includes('Kwota'))
+  const iDate   = headerCols.findIndex(h => h.includes('Data operacji'))
+  const iDesc   = headerCols.findIndex(h => h.includes('Opis operacji'))
+  const iTitle  = headerCols.findIndex(h => h.includes('Tytu'))      // Tytuł
+  const iSender = headerCols.findIndex(h => h.includes('Nadawca'))   // Nadawca/Odbiorca
+  const iCat    = headerCols.findIndex(h => h.includes('Kategoria'))
+  const iAmt    = headerCols.findIndex(h => h.includes('Kwota'))
 
   if (iDate === -1 || iAmt === -1) return null
 
@@ -219,19 +237,26 @@ function parseMbank(lines) {
     if (cols.length <= Math.max(iDate, iAmt)) continue
     const dateStr = clean(cols[iDate])
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue
-    const rawDesc = iDesc >= 0 ? clean(cols[iDesc] || '') : ''
-    const bankCat = iCat >= 0 ? clean(cols[iCat] || '') : ''
-    const amount  = parseAmount(clean(cols[iAmt] || ''))
+    const rawDesc   = iDesc   >= 0 ? clean(cols[iDesc]   || '') : ''
+    const rawTitle  = iTitle  >= 0 ? clean(cols[iTitle]  || '') : ''
+    const rawSender = iSender >= 0 ? clean(cols[iSender] || '') : ''
+    const bankCat   = iCat    >= 0 ? clean(cols[iCat]    || '') : ''
+    const amount    = parseAmount(clean(cols[iAmt] || ''))
     if (amount === null || amount === 0) continue
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) continue
-    const desc = extractMerchantName(rawDesc) || bankCat || 'Import'
-    const normCat = normPl(bankCat.trim())
+
+    // "Tytuł" has the merchant/purpose; "Opis operacji" is just the operation type
+    // ("ZAKUP PRZY UŻYCIU KARTY", "PRZELEW INTERNETOWY", etc.) — not useful for naming.
+    // Fall back chain: Tytuł → Nadawca/Odbiorca → Opis operacji
+    const bestRaw = rawTitle || rawSender || rawDesc
+    const desc = extractMerchantName(bestRaw) || bankCat || 'Import'
+
+    const normCat  = normPl(bankCat.trim())
     const isInternal = INTERNAL_MBANK_CATS.has(normCat)
 
-    // Keyword match on merchant name takes priority — overrides mBank's category when
-    // the bank miscategorises a transaction (e.g. AliExpress → "Żywność", TotalCasino → "Podróże")
-    const keywordCat = guessCategory(desc + ' ' + rawDesc)
+    // Keyword match uses all available text fields for best coverage
+    const keywordCat = guessCategory(desc + ' ' + rawTitle + ' ' + rawSender + ' ' + rawDesc)
     const mbankCat   = MBANK_CAT_MAP[normCat]
     const category   = keywordCat !== 'other' ? keywordCat : (mbankCat || 'other')
 

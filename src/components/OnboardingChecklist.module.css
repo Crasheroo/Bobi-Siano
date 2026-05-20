@@ -1,0 +1,123 @@
+.card {
+  margin: 0 16px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-xl);
+  border: 0.5px solid var(--separator);
+  padding: 18px 16px 14px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.counter {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.track {
+  height: 4px;
+  background: var(--bg-quaternary);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.fill {
+  height: 100%;
+  background: #30d158;
+  border-radius: var(--border-radius-full);
+  transition: width 0.4s ease;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--border-radius-md);
+  transition: background 0.15s;
+}
+
+.stepClickable {
+  cursor: pointer;
+}
+.stepClickable:active { background: var(--bg-tertiary); }
+
+.stepDone {
+  opacity: 0.5;
+}
+
+.check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepDone .check {
+  background: #30d158;
+}
+
+.stepClickable .check {
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--separator);
+}
+
+.stepDone:not(.stepClickable) .check {
+  background: #30d158;
+  border: none;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+.stepText {
+  flex: 1;
+  min-width: 0;
+}
+
+.stepLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.stepDone .stepLabel {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.stepHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.arrow {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}

@@ -77,6 +77,30 @@
   padding: 0;
 }
 
+/* ── Month toggle ───────────────────────────────────────── */
+.monthToggleRow {
+  padding: 0 16px 10px;
+}
+
+.monthToggleBtn {
+  padding: 7px 14px;
+  border-radius: var(--border-radius-full);
+  border: 1px solid var(--separator-opaque);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.monthToggleActive {
+  background: rgba(48, 209, 88, 0.12);
+  border-color: rgba(48, 209, 88, 0.4);
+  color: #30d158;
+}
+
+/* ── Category filters ───────────────────────────────────── */
 .filters {
   display: flex;
   gap: 8px;
@@ -131,13 +155,25 @@
   margin-bottom: 20px;
 }
 
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .groupLabel {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+}
+
+.groupTotal {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff453a;
 }
 
 .groupItems {
@@ -302,9 +338,24 @@
 
 .editActions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-top: 4px;
 }
+
+.duplicateBtn {
+  flex-shrink: 0;
+  padding: 13px 14px;
+  background: rgba(255, 159, 10, 0.12);
+  border: 1px solid rgba(255, 159, 10, 0.35);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff9f0a;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.duplicateBtn:active { background: rgba(255, 159, 10, 0.22); }
 
 .editSaveBtn {
   flex: 1;
@@ -339,3 +390,17 @@
 
 .empty span { font-size: 40px; }
 .empty p { font-size: 16px; color: var(--text-secondary); text-align: center; }
+
+.emptyAction {
+  margin-top: 4px;
+  padding: 12px 24px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: var(--border-radius-full);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.emptyAction:active { opacity: 0.8; }

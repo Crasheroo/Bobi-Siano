@@ -34,13 +34,26 @@ const ACCENT_COLORS = [
 export default function Settings() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { settings, setSettings, profile, setProfile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory } = useStore()
+  const { settings, setSettings, profile, setProfile, user, syncing, customCategories, addCustomCategory, deleteCustomCategory, clearExpenses, resetStore } = useStore()
 
   const theme = settings?.theme || 'dark'
   const accent = settings?.accent || '#0a84ff'
   const language = settings?.language || 'pl'
   const currency = settings?.currency || 'PLN'
   const formatAmount = useFormatCurrency()
+
+  const geminiKey = settings?.geminiApiKey || ''
+  const [geminiInput, setGeminiInput] = useState(geminiKey)
+  const [geminiSaved, setGeminiSaved] = useState(false)
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+
+  const saveGeminiKey = () => {
+    setSettings({ geminiApiKey: geminiInput.trim() })
+    setGeminiSaved(true)
+    setTimeout(() => setGeminiSaved(false), 2000)
+  }
+
+  const [confirmClear, setConfirmClear] = useState(null) // 'expenses' | 'all'
 
   const [showAddCat, setShowAddCat] = useState(false)
   const [newCatName, setNewCatName] = useState('')
@@ -135,6 +148,7 @@ export default function Settings() {
   }
 
   const handleSignOut = async () => {
+    localStorage.removeItem('lucent-storage')
     if (supabase) await supabase.auth.signOut()
   }
 
@@ -509,6 +523,78 @@ export default function Settings() {
           </div>
         </div>
         <p className={styles.sectionNote}>{t.settings.salaryNote}</p>
+      </div>
+
+      {/* Dane */}
+      <div className={styles.section}>
+        <p className={styles.sectionLabel}>AI — automatyczna kategoryzacja</p>
+        <div className={styles.group}>
+          <div className={styles.aiKeyRow}>
+            <input
+              className={styles.aiKeyInput}
+              type={showGeminiKey ? 'text' : 'password'}
+              placeholder="Klucz API Google Gemini (opcjonalnie)"
+              value={geminiInput}
+              onChange={e => { setGeminiInput(e.target.value); setGeminiSaved(false) }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button className={styles.aiKeyToggle} onClick={() => setShowGeminiKey(v => !v)} type="button">
+              {showGeminiKey ? '🙈' : '👁'}
+            </button>
+            <button
+              className={styles.aiKeySave}
+              onClick={saveGeminiKey}
+              disabled={geminiInput.trim() === geminiKey}
+            >
+              {geminiSaved ? '✓' : 'Zapisz'}
+            </button>
+          </div>
+          {geminiKey && (
+            <div className={styles.aiKeyStatus}>
+              <span className={styles.aiKeyDot} />
+              <span>AI aktywne — transakcje bez kategorii będą automatycznie oznaczone przy imporcie</span>
+            </div>
+          )}
+        </div>
+        <p className={styles.sectionNote}>
+          Darmowy klucz: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)' }}>aistudio.google.com</a> → Get API Key.{' '}
+          Opisy transakcji są wysyłane do Google Gemini w celu kategoryzacji. Klucz jest przechowywany tylko na tym urządzeniu.
+        </p>
+
+        <p className={styles.sectionLabel}>Dane</p>
+        <div className={styles.group}>
+          {confirmClear === 'expenses' ? (
+            <div className={styles.confirmBox}>
+              <p className={styles.confirmText}>Usunąć wszystkie wydatki? Tej operacji nie można cofnąć.</p>
+              <div className={styles.confirmActions}>
+                <button className={styles.confirmYes} onClick={() => { clearExpenses(); setConfirmClear(null) }}>Usuń wydatki</button>
+                <button className={styles.confirmNo} onClick={() => setConfirmClear(null)}>Anuluj</button>
+              </div>
+            </div>
+          ) : (
+            <button className={styles.dataBtn} onClick={() => setConfirmClear('expenses')}>
+              Wyczyść wszystkie wydatki
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
+          <div className={styles.rowSeparator} />
+          {confirmClear === 'all' ? (
+            <div className={styles.confirmBox}>
+              <p className={styles.confirmText}>Zresetować całą aplikację? Wszystkie dane zostaną usunięte.</p>
+              <div className={styles.confirmActions}>
+                <button className={styles.confirmYes} onClick={() => { resetStore(); setConfirmClear(null) }}>Resetuj wszystko</button>
+                <button className={styles.confirmNo} onClick={() => setConfirmClear(null)}>Anuluj</button>
+              </div>
+            </div>
+          ) : (
+            <button className={styles.dataBtn} onClick={() => setConfirmClear('all')}>
+              Resetuj wszystko
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
+        </div>
+        <p className={styles.sectionNote}>Usuwa dane tylko z tego urządzenia. Konto w chmurze pozostaje bez zmian.</p>
       </div>
 
       {/* Prawne */}

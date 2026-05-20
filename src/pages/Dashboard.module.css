@@ -143,6 +143,16 @@
   line-height: 1.4;
 }
 
+/* ── Status banner ──────────────────────────────────────── */
+.statusBanner {
+  margin: 0 16px 16px;
+  padding: 11px 16px;
+  border-radius: var(--border-radius-lg);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .statsRow {
   display: flex;
   gap: 10px;
@@ -518,3 +528,149 @@
   transition: border-color 0.15s;
 }
 .budgetWidgetEmpty:active { border-color: rgba(235,235,245,0.4); }
+
+/* ── Goal widget footer ─────────────────────────────────── */
+.goalWidgetFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.goalAddBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.goalAddBtn:active { opacity: 0.7; }
+
+/* ── Shared modal (salary + goal) ───────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  animation: backdropIn 0.18s ease;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modalSheet {
+  width: 100%;
+  background: var(--bg-secondary);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 44px;
+  animation: sheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modalHandle {
+  width: 40px;
+  height: 4px;
+  background: rgba(235, 235, 245, 0.18);
+  border-radius: 2px;
+  margin: 0 auto 22px;
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+
+.modalHint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.modalAmountRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.modalCurrency {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  align-self: flex-end;
+  padding-bottom: 5px;
+}
+
+.modalAmountInput {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -2px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  outline: none;
+  width: 220px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.modalAmountInput::-webkit-outer-spin-button,
+.modalAmountInput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.modalAmountInput::placeholder { color: rgba(235,235,245,0.15); }
+
+.modalGoalProgress {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.modalCancel {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  background: var(--bg-tertiary);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--border-radius-full);
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.modalCancel:active { background: var(--bg-quaternary); }
+
+.modalSave {
+  flex: 1;
+  padding: 14px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: var(--border-radius-full);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.modalSave:active { opacity: 0.85; }

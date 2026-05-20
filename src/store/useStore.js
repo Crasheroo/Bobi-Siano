@@ -30,6 +30,7 @@ const useStore = create(
         })),
       deleteExpense: (id) =>
         set((s) => ({ expenses: s.expenses.filter((e) => e.id !== id) })),
+      clearExpenses: () => set({ expenses: [] }),
 
       // === PRZYCHODY (jednorazowe/dodatkowe) ===
       incomes: [],
@@ -113,7 +114,7 @@ const useStore = create(
       customCategories: [],
       addCustomCategory: (cat) =>
         set((s) => ({
-          customCategories: [...s.customCategories, { ...cat, id: 'custom_' + Date.now() }],
+          customCategories: [...s.customCategories, { ...cat, id: cat.id || 'custom_' + Date.now() }],
         })),
       deleteCustomCategory: (id) =>
         set((s) => ({ customCategories: s.customCategories.filter((c) => c.id !== id) })),
@@ -185,8 +186,8 @@ const useStore = create(
     {
       name: 'lucent-storage',
       version: 1,
-      onRehydrateStorage: () => (state, error) => {
-        if (error) console.error('Failed to rehydrate store:', error)
+      onRehydrateStorage: () => (_state, error) => {
+        if (error && import.meta.env.DEV) console.error('Failed to rehydrate store:', error)
       },
     }
   )

@@ -11,6 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {})
+    const swPath = import.meta.env.PROD ? '/Lucent/sw.js' : '/sw.js'
+    navigator.serviceWorker.register(swPath).catch(() => {})
   })
 }

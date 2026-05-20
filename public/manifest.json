@@ -12,19 +12,19 @@
   "categories": ["finance", "productivity"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "./logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "./logo.png",
       "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "maskable"
@@ -36,7 +36,7 @@
       "short_name": "Wydatek",
       "description": "Szybko dodaj nowy wydatek",
       "url": "/Lucent/add-expense",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "./logo.png", "sizes": "192x192" }]
     }
   ],
   "screenshots": []

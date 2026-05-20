@@ -118,7 +118,7 @@ export default function StatementAnalysis() {
     [filtered, salary, allCategories, formatAmount]
   )
 
-  const maxMonthAmt = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.amount)) : 0
+const maxMonthAmt = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.amount)) : 0
 
   const fmtDate = d => d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -335,6 +335,7 @@ export default function StatementAnalysis() {
               ))}
             </div>
           )}
+
         </>
       )}
     </div>
