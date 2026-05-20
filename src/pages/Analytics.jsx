@@ -5,7 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart
 } from 'recharts'
 import useStore from '../store/useStore.js'
-import { CATEGORIES } from '../utils/constants.js'
+import { CATEGORIES, formatDate } from '../utils/constants.js'
 import { useTranslation } from '../hooks/useTranslation.js'
 import { useFormatCurrency } from '../hooks/useFormatCurrency.js'
 import { getPayPeriod, formatPeriodLabel } from '../utils/payPeriod.js'
@@ -21,6 +21,7 @@ export default function Analytics() {
   const { expenses, customCategories, goals, getMonthlyRecurringTotal, getSalaryForMonth, profile } = useStore()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const [activeTab, setActiveTab] = useState('advice')
+  const [selectedCatId, setSelectedCatId] = useState(null)
   const now = new Date()
 
   const salaryDay = profile?.salaryDay ?? 1
@@ -40,9 +41,18 @@ export default function Analytics() {
     })
     return allCategories
       .filter((c) => map[c.id])
-      .map((c) => ({ name: c.label, value: map[c.id], icon: c.icon, color: c.color }))
+      .map((c) => ({ id: c.id, name: c.label, value: map[c.id], icon: c.icon, color: c.color, count: monthExpenses.filter(e => e.category === c.id).length }))
       .sort((a, b) => b.value - a.value)
   }, [monthExpenses])
+
+  const selectedCat = selectedCatId ? categoryData.find(c => c.id === selectedCatId) : null
+
+  const selectedExpenses = useMemo(() => {
+    if (!selectedCatId) return []
+    return monthExpenses
+      .filter(e => e.category === selectedCatId)
+      .sort((a, b) => b.amount - a.amount)
+  }, [selectedCatId, monthExpenses])
 
   const last6Months = useMemo(() => {
     const result = []
@@ -146,7 +156,7 @@ export default function Analytics() {
           <button
             key={tab.id}
             className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => { setActiveTab(tab.id); setSelectedCatId(null) }}
           >
             {tab.label}
           </button>
@@ -162,27 +172,88 @@ export default function Analytics() {
             <>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
+                  <Pie
+                    data={categoryData}
+                    cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                    onClick={(_, index) => {
+                      const cat = categoryData[index]
+                      setSelectedCatId(prev => prev === cat.id ? null : cat.id)
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     {categoryData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
+                      <Cell
+                        key={index}
+                        fill={entry.color}
+                        opacity={selectedCatId && selectedCatId !== entry.id ? 0.3 : 1}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
+
               <div className={styles.legend}>
-                {categoryData.map((cat, i) => (
-                  <div key={i} className={styles.legendItem}>
+                {categoryData.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className={`${styles.legendItem} ${styles.legendItemClickable} ${selectedCatId === cat.id ? styles.legendItemSelected : ''}`}
+                    onClick={() => setSelectedCatId(prev => prev === cat.id ? null : cat.id)}
+                  >
                     <div className={styles.legendDot} style={{ background: cat.color }} />
                     <span className={styles.legendIcon}>{cat.icon}</span>
                     <span className={styles.legendName}>{cat.name}</span>
+                    <span className={styles.legendCount}>{cat.count} tr.</span>
                     <span className={styles.legendValue}>{formatAmount(cat.value)}</span>
                     <span className={styles.legendPct}>
                       {expensesTotal > 0 ? ((cat.value / expensesTotal) * 100).toFixed(0) : 0}%
                     </span>
+                    <span className={styles.legendChevron} style={{ opacity: selectedCatId === cat.id ? 1 : 0.3 }}>
+                      {selectedCatId === cat.id ? '▾' : '▸'}
+                    </span>
                   </div>
                 ))}
               </div>
+
+              {selectedCat && (
+                <div className={styles.catDetail}>
+                  <div className={styles.catDetailHeader} style={{ borderLeftColor: selectedCat.color }}>
+                    <span className={styles.catDetailHeaderIcon} style={{ background: selectedCat.color + '22' }}>
+                      {selectedCat.icon}
+                    </span>
+                    <div className={styles.catDetailHeaderMeta}>
+                      <span className={styles.catDetailHeaderName}>{selectedCat.name}</span>
+                      <span className={styles.catDetailHeaderSub}>
+                        {selectedCat.count} {selectedCat.count === 1 ? 'transakcja' : selectedCat.count < 5 ? 'transakcje' : 'transakcji'}
+                        {' · '}śr. {formatAmount(Math.round(selectedCat.value / selectedCat.count))}
+                      </span>
+                    </div>
+                    <span className={styles.catDetailTotal}>{formatAmount(selectedCat.value)}</span>
+                  </div>
+
+                  {selectedExpenses.map((exp, i) => {
+                    const pct = selectedCat.value > 0 ? (exp.amount / selectedCat.value) * 100 : 0
+                    return (
+                      <div key={exp.id} className={styles.catDetailRow}>
+                        <span className={styles.catDetailRank}>#{i + 1}</span>
+                        <div className={styles.catDetailInfo}>
+                          <span className={styles.catDetailName}>{exp.description}</span>
+                          <div className={styles.catDetailBarWrap}>
+                            <div className={styles.catDetailBar} style={{ width: `${pct}%`, background: selectedCat.color }} />
+                          </div>
+                        </div>
+                        <div className={styles.catDetailRight}>
+                          <span className={styles.catDetailAmount}>{formatAmount(exp.amount)}</span>
+                          <span className={styles.catDetailDate}>{formatDate(exp.date)}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>
