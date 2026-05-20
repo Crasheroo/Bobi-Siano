@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 import { CATEGORIES, CURRENCIES } from '../utils/constants.js'
@@ -81,6 +81,21 @@ export default function Settings() {
   const [authLoading, setAuthLoading] = useState(false)
   const [resetSent, setResetSent] = useState(false)
 
+  const [recoveryMode, setRecoveryMode] = useState(false)
+  const [recoveryDone, setRecoveryDone] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
+  const [recoveryError, setRecoveryError] = useState('')
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   const clearForm = () => {
     setEmail('')
     setPassword('')
@@ -135,8 +150,9 @@ export default function Settings() {
     }
     setAuthLoading(true)
     try {
+      const base = import.meta.env.PROD ? '/Lucent' : ''
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: window.location.origin + window.location.pathname,
+        redirectTo: `${window.location.origin}${base}/settings`,
       })
       if (error) throw error
       setResetSent(true)
@@ -147,6 +163,30 @@ export default function Settings() {
     setAuthLoading(false)
   }
 
+  const handleUpdatePassword = async () => {
+    setRecoveryError('')
+    if (newPassword.length < 6) {
+      setRecoveryError(t.settings.authFormErrors.passwordTooShort)
+      return
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setRecoveryError(t.settings.authFormErrors.passwordMismatch)
+      return
+    }
+    setRecoveryLoading(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      setRecoveryMode(false)
+      setRecoveryDone(true)
+      setNewPassword('')
+      setNewPasswordConfirm('')
+    } catch (e) {
+      setRecoveryError(mapAuthError(e))
+    }
+    setRecoveryLoading(false)
+  }
+
   const handleSignOut = async () => {
     localStorage.removeItem('lucent-storage')
     if (supabase) await supabase.auth.signOut()
@@ -154,6 +194,48 @@ export default function Settings() {
 
   return (
     <div className={styles.page}>
+      {recoveryMode && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 24,
+        }}>
+          <div style={{
+            background: 'var(--bg-secondary)', borderRadius: 16,
+            padding: 24, width: '100%', maxWidth: 360,
+            display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Ustaw nowe hasło
+            </h2>
+            <input
+              className={styles.authInput}
+              type="password"
+              placeholder={t.settings.passwordPlaceholder}
+              value={newPassword}
+              onChange={(e) => { setNewPassword(e.target.value); setRecoveryError('') }}
+              autoComplete="new-password"
+            />
+            <input
+              className={styles.authInput}
+              type="password"
+              placeholder={t.settings.confirmPasswordPlaceholder}
+              value={newPasswordConfirm}
+              onChange={(e) => { setNewPasswordConfirm(e.target.value); setRecoveryError('') }}
+              autoComplete="new-password"
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdatePassword()}
+            />
+            {recoveryError && <p className={styles.authError}>{recoveryError}</p>}
+            <button
+              className={styles.authSubmitBtn}
+              onClick={handleUpdatePassword}
+              disabled={recoveryLoading}
+            >
+              {recoveryLoading ? t.common.loading : 'Zapisz nowe hasło'}
+            </button>
+          </div>
+        </div>
+      )}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => navigate('/')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -186,6 +268,11 @@ export default function Settings() {
                 </div>
                 {syncing && <span className={styles.syncDot} title="Synchronizowanie..." />}
               </div>
+              {recoveryDone && (
+                <p className={styles.authSuccess} style={{ padding: '0 16px' }}>
+                  Hasło zostało zmienione
+                </p>
+              )}
               <div className={styles.rowSeparator} />
               <button className={styles.signOutBtn} onClick={handleSignOut}>
                 {t.settings.signOut}
