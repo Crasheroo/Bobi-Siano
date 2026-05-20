@@ -3,7 +3,6 @@ const VALID_CATS = new Set([
   'shopping', 'health', 'utilities', 'fitness', 'education', 'travel', 'other',
 ])
 
-// Gemini sometimes answers in Polish or uses synonyms — normalise to our IDs
 const CAT_NORMALIZE = {
   'jedzenie': 'food', 'spożywcze': 'food', 'supermarket': 'food', 'sklep spożywczy': 'food',
   'restauracje': 'restaurants', 'jedzenie na mieście': 'restaurants', 'gastronomia': 'restaurants',
@@ -21,6 +20,16 @@ const CAT_NORMALIZE = {
   'inne': 'other', 'nieznane': 'other', 'przelew': 'other',
 }
 
+const AI_CAT_ICONS = ['🏷️', '🎁', '🎮', '💇', '☕', '🎨', '🔧', '🎵', '⚽', '🌿', '👗', '🐾', '💰', '🏠', '🐶', '🧴', '🍕', '🧸', '🚴', '🌊']
+const AI_CAT_COLORS = ['#0a84ff', '#30d158', '#ff9f0a', '#bf5af2', '#5ac8fa', '#ff6b35', '#ffd60a', '#64d2ff', '#ff375f', '#34c759']
+
+function slugify(label) {
+  return 'ai_' + label.toLowerCase()
+    .replace(/ą/g, 'a').replace(/ę/g, 'e').replace(/ó/g, 'o').replace(/ś/g, 's')
+    .replace(/ł/g, 'l').replace(/ż/g, 'z').replace(/ź/g, 'z').replace(/ć/g, 'c')
+    .replace(/ń/g, 'n').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
 function normalizeCat(raw) {
   if (!raw) return 'other'
   const s = raw.toLowerCase().trim()
@@ -31,25 +40,27 @@ function normalizeCat(raw) {
 function buildPrompt(items) {
   return `Kategoryzuj polskie transakcje bankowe. Każda to opis przelewu lub płatności kartą.
 
-Kategorie (użyj dokładnie tych angielskich identyfikatorów):
+Standardowe kategorie (użyj jeśli pasuje, podaj dokładny identyfikator):
 - food: zakupy spożywcze, sklepy (Biedronka, Lidl, Carrefour itp.)
 - restaurants: restauracje, kawiarnie, fast food, dostawy jedzenia
 - transport: paliwo, parking, autostrady, komunikacja, loty, Uber, Bolt
-- entertainment: kino, gry, bilety, sport widowiskowy, kasyna
+- entertainment: kino, gry, bilety, sport widowiskowy
 - subscriptions: Netflix, Spotify, Apple, Google, subskrypcje cyfrowe
 - shopping: odzież, elektronika, Allegro, Amazon, sklepy non-food
 - health: apteka, lekarz, stomatolog, szpital, drogeria
-- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie, składki
+- utilities: czynsz, media, prąd, gaz, internet, telefon, ZUS, podatki, ubezpieczenie
 - fitness: siłownia, basen, klub sportowy, MultiSport
 - education: szkoła, kursy, szkolenia, uczelnia, Udemy
 - travel: hotel, Airbnb, wakacje, biuro podróży
-- other: przelewy prywatne, nie pasuje do powyższych
+- other: przelewy prywatne, nie pasuje do żadnej powyższej
+
+Jeśli transakcja wyraźnie pasuje do nowej, specyficznej kategorii której nie ma na liście (np. zwierzęta, dzieci, kryptowaluty), użyj "NEW" w polu "cat" i podaj nazwę po polsku (max 2 słowa) w polu "label". Nie twórz nowych kategorii dla rzeczy które pasują do powyższych.
 
 Transakcje (JSON):
 ${JSON.stringify(items)}
 
 Zwróć TYLKO tablicę JSON bez żadnego tekstu przed ani po:
-[{"id":0,"cat":"..."},{"id":1,"cat":"..."},...]`
+[{"id":0,"cat":"food"},{"id":1,"cat":"NEW","label":"Kryptowaluty"},...]`
 }
 
 async function callGemini(items, apiKey) {
@@ -78,20 +89,23 @@ async function callGemini(items, apiKey) {
 
 /**
  * Categorise transactions whose category is 'other' using Gemini.
- * Returns {originalIndex: categoryId} for each transaction that was re-categorised.
+ * Returns { cats: {originalIndex: categoryId}, newCats: [{id, label, icon, color}] }
+ * where newCats contains AI-invented categories not in the standard list.
  */
 export async function aiCategorizeTransactions(transactions, apiKey) {
-  if (!apiKey?.trim() || !transactions.length) return {}
+  if (!apiKey?.trim() || !transactions.length) return { cats: {}, newCats: [] }
 
-  // Process all transactions currently labelled 'other' (income/internal won't be imported anyway)
   const toProcess = transactions
     .map((tx, i) => ({ i, tx }))
     .filter(({ tx }) => tx.category === 'other')
 
-  if (!toProcess.length) return { __none: true }
+  if (!toProcess.length) return { cats: {}, newCats: [], __none: true }
 
-  const result = {}
-  const CHUNK = 80 // stay well under token limits
+  const cats = {}
+  const newCatsMap = {}
+  let iconIdx = 0
+  let colorIdx = 0
+  const CHUNK = 80
 
   for (let offset = 0; offset < toProcess.length; offset += CHUNK) {
     const chunk = toProcess.slice(offset, offset + CHUNK)
@@ -99,12 +113,26 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
 
     const parsed = await callGemini(items, apiKey)
     parsed.forEach(r => {
-      if (r.id >= 0 && r.id < chunk.length) {
-        const cat = normalizeCat(r.cat || r.category || r.kategoria || '')
-        result[chunk[r.id].i] = cat
+      if (r.id < 0 || r.id >= chunk.length) return
+      const txIdx = chunk[r.id].i
+
+      if (r.cat === 'NEW' && r.label?.trim()) {
+        const label = r.label.trim()
+        const slug = slugify(label)
+        if (!newCatsMap[slug]) {
+          newCatsMap[slug] = {
+            id: slug,
+            label,
+            icon: AI_CAT_ICONS[iconIdx++ % AI_CAT_ICONS.length],
+            color: AI_CAT_COLORS[colorIdx++ % AI_CAT_COLORS.length],
+          }
+        }
+        cats[txIdx] = slug
+      } else {
+        cats[txIdx] = normalizeCat(r.cat || r.category || r.kategoria || '')
       }
     })
   }
 
-  return result
+  return { cats, newCats: Object.values(newCatsMap) }
 }
