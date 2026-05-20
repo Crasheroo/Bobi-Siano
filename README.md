@@ -15,7 +15,7 @@ A privacy-first personal finance PWA built for the Polish market. Track expenses
 - Add, edit and delete expenses with category, description and date
 - Custom categories with custom icon and color
 - CSV import from mBank, PKO BP, ING and generic semicolon-delimited exports
-- OCR receipt scanning via Tesseract.js — fully local, no image ever leaves your device
+- OCR receipt scanning via Tesseract.js — fully local, no image ever leaves your device.
 
 **Budget & planning**
 - Per-category monthly budgets with visual progress

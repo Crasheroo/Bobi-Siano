@@ -20,7 +20,10 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\" -Force)",
       "Bash(Select-Object Name, FullName)",
       "Bash(xargs grep -l \"catch.*{\")",
-      "Bash(Test-Path \"c:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\\\\README.md\")"
+      "Bash(Test-Path \"c:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\\\\README.md\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\pawez\\\\OneDrive\\\\Desktop\\\\Projekty\\\\Bobi-Siano\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head -50)"
     ]
   }
 }
