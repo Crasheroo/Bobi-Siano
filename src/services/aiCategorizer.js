@@ -103,7 +103,7 @@ export async function aiCategorizeTransactions(transactions, apiKey) {
 
   const toProcess = transactions
     .map((tx, i) => ({ i, tx }))
-    .filter(({ tx }) => tx.category === 'other')
+    .filter(({ tx }) => tx.category === 'other' && tx.isExpense && !tx.isInternal)
 
   if (!toProcess.length) return { cats: {}, newCats: [], __none: true }
 
