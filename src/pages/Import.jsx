@@ -11,7 +11,7 @@ import styles from './Import.module.css'
 export default function Import() {
   const navigate = useNavigate()
   const t = useTranslation()
-  const { addExpense, customCategories, addCustomCategory, expenses, settings } = useStore()
+  const { addExpense, customCategories, expenses, settings } = useStore()
   const formatAmount = useFormatCurrency()
   const allCategories = [...CATEGORIES, ...(customCategories || [])]
   const fileRef = useRef(null)
@@ -62,16 +62,16 @@ export default function Import() {
       setAiLoading(true)
       setAiStatus(`loading:${otherCount}`)
       try {
-        const { cats: aiCats, newCats, __none } = await aiCategorizeTransactions(parsed, apiKey)
-        if (__none) {
+        const aiCats = await aiCategorizeTransactions(parsed, apiKey)
+        if (aiCats.__none) {
           setAiStatus('none')
         } else {
-          const existingIds = new Set((customCategories || []).map(c => c.id))
-          for (const cat of newCats) {
-            if (!existingIds.has(cat.id)) addCustomCategory(cat)
+          const count = Object.keys(aiCats).filter(k => k !== '__none').length
+          if (count > 0) {
+            const clean = { ...aiCats }
+            delete clean.__none
+            setCats(prev => ({ ...prev, ...clean }))
           }
-          const count = Object.keys(aiCats).length
-          if (count > 0) setCats(prev => ({ ...prev, ...aiCats }))
           setAiStatus(`ok:${count}`)
         }
       } catch (e) {
