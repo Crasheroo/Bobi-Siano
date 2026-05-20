@@ -58,7 +58,7 @@ export default function Import() {
         setAiStatus('nokey')
         return
       }
-      const otherCount = parsed.filter(tx => tx.category === 'other').length
+      const otherCount = parsed.filter(tx => tx.category === 'other' && tx.isExpense && !tx.isInternal).length
       setAiLoading(true)
       setAiStatus(`loading:${otherCount}`)
       try {

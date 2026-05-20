@@ -110,7 +110,10 @@ export default function Dashboard() {
     setGoalAddInput('')
   }
 
-  const recentExpenses = useMemo(() => [...expenses].slice(0, 5), [expenses])
+  const recentExpenses = useMemo(() =>
+    [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5),
+    [expenses]
+  )
   const activeGoals    = (goals || []).filter(g => g.currentAmount < g.targetAmount)
 
   const onboardingDone = salarySetThisMonth && expenses.length > 0 && (goals || []).length > 0
